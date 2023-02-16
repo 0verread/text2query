@@ -1,8 +1,10 @@
+#!./venv/bin/python
 import json
 import openai
 import os
 
 import subprocess
+import sys
 
 # with open('GPT_SECRET_KEY.json') as f:
 #     data = json.load(f)
@@ -28,9 +30,15 @@ def makeit(prompt):
   print('{}{}'.format('SELECT',sqlRes))
 
   sqlQ = '{}{}'.format('Select', sqlRes)
-  subprocess.run(["csvkit", "-h"])
+# makeit("Get all the users that are older than 25 years old")
 
-makeit("Get all the users that are older than 25 years old")
+args  = ["--query", "Select count(*) from employees", "assets/employees.csv"]
+pp = "/Users/subhajit/workspace/text2query/venv/bin/csvsql"
+
+res = subprocess.run(["csvsql"] + args, capture_output=True, text=True)
+print(res.stdout)
+# print(res.stderr)
+
 
 # from gpt import GPT
 # from gpt import Example
