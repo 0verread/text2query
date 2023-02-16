@@ -2,6 +2,8 @@ import json
 import openai
 import os
 
+import subprocess
+
 # with open('GPT_SECRET_KEY.json') as f:
 #     data = json.load(f)
 
@@ -12,7 +14,8 @@ def makeit(prompt):
     # model="code-davinci-002",
     model="davinci-codex",
     # prompt=prompt,
-    prompt="### Postgres SQL tables, with their properties:\n#\n# Employee(id, name, department_id)\n# Department(id, name, address)\n# Salary_Payments(id, employee_id, amount, date)\n#\n### A query to get employees who salary is greater than 25000 \nSELECT",
+    # prompt="### Postgres SQL tables, with their properties:\n#\n# Employee(id, name, department_id)\n# Department(id, name, address)\n# Salary_Payments(id, employee_id, amount, date)\n#\n### A query to get employees who salary is greater than 25000 \nSELECT",
+    prompt="### Postgres SQL tables, with their properties:\n#\n# Employee(EMPLOYEE_ID,FIRST_NAME,LAST_NAME,EMAIL,PHONE_NUMBER,HIRE_DATE,JOB_ID,SALARY,COMMISSION_PCT,MANAGER_ID,DEPARTMENT_ID)\n#\n### A query to get employees who salary is greater than 25000 \nSELECT",
     temperature=0.5,
     max_tokens=100,
     top_p=1.0,
@@ -21,7 +24,11 @@ def makeit(prompt):
     # stop=["#", ";"]
   )
 
-  print(response.choices[0].text)
+  sqlRes = response.choices[0].text.split(';',1)[0]
+  print('{}{}'.format('SELECT',sqlRes))
+
+  sqlQ = '{}{}'.format('Select', sqlRes)
+  subprocess.run(["csvkit", "-h"])
 
 makeit("Get all the users that are older than 25 years old")
 
