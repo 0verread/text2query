@@ -8,8 +8,10 @@ import sys
 
 openai.api_key = os.environ['OPENAI_API_KEY']
 
+# make prompt more dynamic
+# show output in a table like UI
+
 def makeit(prompt):
-  # print(prompt)
   response = openai.Completion.create(
     # model="code-davinci-002",
     model="davinci-codex",
@@ -20,18 +22,21 @@ def makeit(prompt):
     max_tokens=100,
     top_p=1.0,
     frequency_penalty=0.0,
-    presence_penalty=0.0
-    # stop=["#", ";"]
+    presence_penalty=0.0,
+    stop=["#", ";"]
   )
   # print(response.choices[0])
-  sqlRes = response.choices[0].text.split('#',1)[0]
+  sqlRes = response.choices[0].text
   new_sql_q = sqlRes.replace("\n", " ")
   final_sql_q = '{}{}'.format('SELECT',new_sql_q)
-  print(final_sql_q)
   args  = ["--query", f"{final_sql_q}", "assets/employees.csv"]
   res = subprocess.run(["csvsql"] + args, capture_output=True, text=True)
   print(res.stdout)
   print(res.stderr)
+
+
+def run_csvsql_query():
+
 
 
 
