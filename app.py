@@ -6,18 +6,16 @@ import os
 import subprocess
 import sys
 
-# with open('GPT_SECRET_KEY.json') as f:
-#     data = json.load(f)
-
 openai.api_key = os.environ['OPENAI_API_KEY']
 
 def makeit(prompt):
+  # print(prompt)
   response = openai.Completion.create(
     # model="code-davinci-002",
     model="davinci-codex",
     # prompt=prompt,
     # prompt="### Postgres SQL tables, with their properties:\n#\n# Employee(id, name, department_id)\n# Department(id, name, address)\n# Salary_Payments(id, employee_id, amount, date)\n#\n### A query to get employees who salary is greater than 25000 \nSELECT",
-    prompt="### Postgres SQL tables, with their properties:\n#\n# Employee(EMPLOYEE_ID,FIRST_NAME,LAST_NAME,EMAIL,PHONE_NUMBER,HIRE_DATE,JOB_ID,SALARY,COMMISSION_PCT,MANAGER_ID,DEPARTMENT_ID)\n#\n### A query to get employees who salary is greater than 25000 \nSELECT",
+    prompt="### Postgres SQL tables, with their properties:\n#\n# employees(EMPLOYEE_ID,FIRST_NAME,LAST_NAME,EMAIL,PHONE_NUMBER,HIRE_DATE,JOB_ID,SALARY,COMMISSION_PCT,MANAGER_ID,DEPARTMENT_ID)\n#\n### {} \nSELECT".format(prompt),
     temperature=0.5,
     max_tokens=100,
     top_p=1.0,
@@ -25,19 +23,39 @@ def makeit(prompt):
     presence_penalty=0.0
     # stop=["#", ";"]
   )
+  # print(response.choices[0])
+  sqlRes = response.choices[0].text.split('#',1)[0]
+  new_sql_q = sqlRes.replace("\n", " ")
+  final_sql_q = '{}{}'.format('SELECT',new_sql_q)
+  print(final_sql_q)
+  args  = ["--query", f"{final_sql_q}", "assets/employees.csv"]
+  res = subprocess.run(["csvsql"] + args, capture_output=True, text=True)
+  print(res.stdout)
+  print(res.stderr)
 
-  sqlRes = response.choices[0].text.split(';',1)[0]
-  print('{}{}'.format('SELECT',sqlRes))
 
-  sqlQ = '{}{}'.format('Select', sqlRes)
-# makeit("Get all the users that are older than 25 years old")
 
-args  = ["--query", "Select count(*) from employees", "assets/employees.csv"]
-pp = "/Users/subhajit/workspace/text2query/venv/bin/csvsql"
+provided_prompt_str = sys.argv[1]
+makeit("{}{}".format('A query to get',provided_prompt_str))
 
-res = subprocess.run(["csvsql"] + args, capture_output=True, text=True)
-print(res.stdout)
-# print(res.stderr)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 # from gpt import GPT
