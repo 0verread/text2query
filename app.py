@@ -5,8 +5,17 @@ import os
 
 import subprocess
 import sys
+import psycopg2
 
 openai.api_key = os.environ['OPENAI_API_KEY']
+
+
+# database variables
+database = os.environ['DATABASE']
+host = os.environ['HOST']
+port = os.environ['PORT']
+user = os.environ['USER']
+password = os.environ['PASSWORD']
 
 # make prompt more dynamic
   #  - Get columns using pandas
@@ -43,11 +52,25 @@ def run_csvsql_query(input_file, query):
     return result.stdout
 
 
+def db_connnection():
+  conn = psycopg2.connect(database=database,
+                          host=host,
+                          user=user,
+                          password=password,
+                          port=port)
+
+  cursor = conn.cursor()
+  cursor.execute("SELECT * FROM employees")
+  print(cursor.fetchall())
+  print('coming here')
+
+
 if __name__ == "__main__":
   provided_prompt_str = sys.argv[1]
-  final_prompt = "{}{}".format('A query to get', provided_prompt_str)
-  response = makeit(final_prompt)
-  query = response.replace("\n", " ")
-  input_file = "assets/employees.csv"
-  run_csvsql_query(input_file, query)
+  db_connnection()
+  # final_prompt = "{}{}".format('A query to get', provided_prompt_str)
+  # response = makeit(final_prompt)
+  # query = response.replace("\n", " ")
+  # input_file = "assets/employees.csv"
+  # run_csvsql_query(input_file, query)
   
