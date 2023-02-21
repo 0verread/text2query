@@ -7,15 +7,22 @@ import subprocess
 import sys
 import psycopg2
 
+from flask import Flask, request
+from slack_bolt import App, Say
+from slack_bolt.adapter.flask import SlackRequestHandler
+
+app = Flask(__name__)
+bolt_app = App(token=os.environ.get("SLACK_BOT_TOKEN"), signing_secret=os.environ.get("SLACK_SIGNING_SECRET"))
+
 openai.api_key = os.environ['OPENAI_API_KEY']
 
 
 # database variables
-database = os.environ['DATABASE']
-host = os.environ['HOST']
-port = os.environ['PORT']
-user = os.environ['USER']
-password = os.environ['PASSWORD']
+# database = os.environ['DATABASE']
+# host = os.environ['HOST']
+# port = os.environ['PORT']
+# user = os.environ['USER']
+# password = os.environ['PASSWORD']
 
 # make prompt more dynamic
   #  - Get columns using pandas
@@ -65,12 +72,47 @@ def db_connnection():
   print('coming here')
 
 
+@app.route('/', methods=['POST'])
+def final():
+  return "SOmehitn"
+
+
+@bolt_app.message("friday")
+def greetings(payload: dict, say: Say):
+  user: str = payload.get("user")
+  say(f"Hello sir")
+
+
+@bolt_app.command("/friday")
+def real_do(ack, respond, command):
+  ack()
+  question = command['text']
+  final_prompt = "{}{}".format('A query to get', question)
+  response = makeit(final_prompt)
+  query = response.replace("\n", " ")
+  input_file = "assets/employees.csv"
+  ans = run_csvsql_query(input_file, query)
+  print(ans)
+  respond(ans)
+
+
+
+handler = SlackRequestHandler(bolt_app)
+
+@app.route("/friday/events", methods=['POST'])
+def slack_events():
+  return handler.handle(request)
+
+
+
 if __name__ == "__main__":
-  provided_prompt_str = sys.argv[1]
-  db_connnection()
+  # provided_prompt_str = sys.argv[1]
+  # db_connnection()
   # final_prompt = "{}{}".format('A query to get', provided_prompt_str)
   # response = makeit(final_prompt)
   # query = response.replace("\n", " ")
   # input_file = "assets/employees.csv"
   # run_csvsql_query(input_file, query)
+
+  app.run(host='0.0.0.0', port=3000)
   
