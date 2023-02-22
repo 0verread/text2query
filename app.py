@@ -55,7 +55,7 @@ def run_csvsql_query(input_file, query):
     print(f'Error running query:{result.stderr}')
     return None
   else:
-    print(result.stdout)
+    # print(result.stdout)
     return result.stdout
 
 
@@ -69,10 +69,10 @@ def db_connnection():
   cursor = conn.cursor()
   cursor.execute("SELECT * FROM employees")
   print(cursor.fetchall())
-  print('coming here')
+  # print('coming here')
 
 
-@app.route('/', methods=['POST'])
+@app.route('/test', methods=['POST'])
 def final():
   return "SOmehitn"
 
@@ -92,8 +92,9 @@ def real_do(ack, respond, command):
   query = response.replace("\n", " ")
   input_file = "assets/employees.csv"
   ans = run_csvsql_query(input_file, query)
-  print(ans)
-  respond(ans)
+  res = "Your query: {}\n".format(question)
+  final_res = "{}Answer:\n{}".format(res, ans)
+  respond(final_res)
 
 
 
@@ -114,5 +115,5 @@ if __name__ == "__main__":
   # input_file = "assets/employees.csv"
   # run_csvsql_query(input_file, query)
 
-  app.run(host='0.0.0.0', port=3000)
+  app.run(host='0.0.0.0', port=3030)
   
