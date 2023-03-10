@@ -1,6 +1,5 @@
 import os
 
-
 import MySQLdb as mysqldb
 
 # get database details
@@ -17,7 +16,13 @@ def connect_db(user, password, database):
 def exe_query(db, query):
     c = db.cursor()
     c.execute(query)
-    print(c.fetchall())
+    return c.fetchall()
+
+def get_columns(db, table):
+    ins = db.cursor()
+    getColNamesStmt = "describe " + table
+    ins.execute(getColNamesStmt)
+    print(ins.fetchall())
 
 # c=db.cursor()
 # max_price=5

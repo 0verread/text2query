@@ -7,9 +7,15 @@ import subprocess
 import sys
 import psycopg2
 
-from flask import Flask, request
+from flask import Flask, request, jsonify
 from slack_bolt import App, Say
 from slack_bolt.adapter.flask import SlackRequestHandler
+import jsonpickle
+
+sys.path.insert(0, '/Users/subhajit/workspace/text2query/lib/')
+from dbconnect import connect_db, exe_query 
+
+
 
 app = Flask(__name__)
 bolt_app = App(token=os.environ.get("SLACK_BOT_TOKEN"), signing_secret=os.environ.get("SLACK_SIGNING_SECRET"))
@@ -72,9 +78,17 @@ def db_connnection():
   # print('coming here')
 
 
-@app.route('/test', methods=['POST'])
+@app.route('/test', methods=['POST', 'GET'])
 def final():
-  return "SOmehitn"
+  password = "newpassword"
+  user = "root"
+  database = "gystdb"
+  db_ins = connect_db(user, password, database)
+  res = exe_query(db_ins, "Select * from todolist")
+  print(type(res))
+  print(jsonify(res))
+  # dbconnect.get_columns(db_ins, "todolist")
+  return {"status": "200", "data": res}
 
 
 @bolt_app.message("friday")
@@ -114,6 +128,5 @@ if __name__ == "__main__":
   # query = response.replace("\n", " ")
   # input_file = "assets/employees.csv"
   # run_csvsql_query(input_file, query)
-
   app.run(host='0.0.0.0', port=3030)
   
