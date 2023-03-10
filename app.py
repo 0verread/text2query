@@ -10,7 +10,7 @@ import psycopg2
 from flask import Flask, request, jsonify
 from slack_bolt import App, Say
 from slack_bolt.adapter.flask import SlackRequestHandler
-import jsonpickle
+from flask_mysqldb import MySQL
 
 sys.path.insert(0, '/Users/subhajit/workspace/text2query/lib/')
 from dbconnect import connect_db, exe_query 
@@ -22,6 +22,7 @@ bolt_app = App(token=os.environ.get("SLACK_BOT_TOKEN"), signing_secret=os.enviro
 
 openai.api_key = os.environ['OPENAI_API_KEY']
 
+db_ins  = None
 
 # database variables
 # database = os.environ['DATABASE']
@@ -78,45 +79,87 @@ def db_connnection():
   # print('coming here')
 
 
-@app.route('/test', methods=['POST', 'GET'])
-def final():
-  password = "newpassword"
-  user = "root"
-  database = "gystdb"
-  db_ins = connect_db(user, password, database)
-  res = exe_query(db_ins, "Select * from todolist")
-  print(type(res))
-  print(jsonify(res))
-  # dbconnect.get_columns(db_ins, "todolist")
-  return {"status": "200", "data": res}
+# @app.route('/test', methods=['POST', 'GET'])
+# def final():
+#   password = "newpassword"
+#   user = "root"
+#   database = "gystdb"
+#   db_ins = connect_db(user, password, database)
+#   res = exe_query(db_ins, "Select * from todolist")
+#   print(type(res))
+#   print(jsonify(res))
+#   # dbconnect.get_columns(db_ins, "todolist")
+#   return {"status": "200", "data": res}
+
+@app.route('/auth', methods=['POST'])
+def db_auth():
+  response = None
+  if not request.json : 
+    response.status = "400"
+    response.data = "No data is provided"
+  
+  dbpassword = request.json['dbpassword']
+  dbuser = request.json['dbuser']
+  dbname = request.json['dbname']
+
+  app.config['MYSQL_USER'] = dbuser
+  app.config['MYSQL_PASSWORD'] = dbpassword
+  app.config['MYSQL_DB'] = dbname
+  try:
+    global db_ins
+    db_ins = connect_db(dbuser, dbpassword, dbname)
+    response = jsonify({"status": "200", "data": "Connection established"})
+  except Exception as e:
+    response = jsonify({"status": "400", "data": "Connection could not be established"})
+  return response
+
+""" Right now, you have to pass SQL query to test this API
+    TODO: It takes query in natural lang, retrun result"""
+
+@app.route('/query', methods=['POST'])
+def query():
+  global db_ins
+  response = None
+  query = request.json['query']
+  
+  if db_ins is None:
+    response = jsonify({"status": "400", "data": "DB connection is failed"})
+    return response
+  res = exe_query(db_ins, query)
+  response = jsonify({"status": "200", "data": res})
+  return response
+
+  
+@app.errorhandler(404)
+def not_found(error):
+  return jsonify({'error': 'Not found'})
+
+# @bolt_app.message("friday")
+# def greetings(payload: dict, say: Say):
+#   user: str = payload.get("user")
+#   say(f"Hello sir")
 
 
-@bolt_app.message("friday")
-def greetings(payload: dict, say: Say):
-  user: str = payload.get("user")
-  say(f"Hello sir")
-
-
-@bolt_app.command("/friday")
-def real_do(ack, respond, command):
-  ack()
-  question = command['text']
-  final_prompt = "{}{}".format('A query to get', question)
-  response = makeit(final_prompt)
-  query = response.replace("\n", " ")
-  input_file = "assets/employees.csv"
-  ans = run_csvsql_query(input_file, query)
-  res = "Your query: {}\n".format(question)
-  final_res = "{}Answer:\n{}".format(res, ans)
-  respond(final_res)
+# @bolt_app.command("/friday")
+# def real_do(ack, respond, command):
+#   ack()
+#   question = command['text']
+#   final_prompt = "{}{}".format('A query to get', question)
+#   response = makeit(final_prompt)
+#   query = response.replace("\n", " ")
+#   input_file = "assets/employees.csv"
+#   ans = run_csvsql_query(input_file, query)
+#   res = "Your query: {}\n".format(question)
+#   final_res = "{}Answer:\n{}".format(res, ans)
+#   respond(final_res)
 
 
 
-handler = SlackRequestHandler(bolt_app)
+# handler = SlackRequestHandler(bolt_app)
 
-@app.route("/friday/events", methods=['POST'])
-def slack_events():
-  return handler.handle(request)
+# @app.route("/friday/events", methods=['POST'])
+# def slack_events():
+#   return handler.handle(request)
 
 
 
@@ -128,5 +171,5 @@ if __name__ == "__main__":
   # query = response.replace("\n", " ")
   # input_file = "assets/employees.csv"
   # run_csvsql_query(input_file, query)
-  app.run(host='0.0.0.0', port=3030)
+  app.run(host='0.0.0.0', port=3030, debug=False)
   
