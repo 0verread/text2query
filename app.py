@@ -91,16 +91,12 @@ def db_connnection():
 #   # dbconnect.get_columns(db_ins, "todolist")
 #   return {"status": "200", "data": res}
 
-@app.route('/auth', methods=['POST'])
-def db_auth():
+# @app.route('/auth', methods=['POST'])
+def db_auth(dbuser, dbpassword, dbname):
   response = None
   if not request.json : 
     response.status = "400"
     response.data = "No data is provided"
-  
-  dbpassword = request.json['dbpassword']
-  dbuser = request.json['dbuser']
-  dbname = request.json['dbname']
 
   app.config['MYSQL_USER'] = dbuser
   app.config['MYSQL_PASSWORD'] = dbpassword
@@ -121,6 +117,13 @@ def query():
   global db_ins
   response = None
   query = request.json['query']
+
+  dbpassword = request.json['dbpassword']
+  dbuser = request.json['dbuser']
+  dbname = request.json['dbname']
+
+  db_auth_status = db_auth(dbuser, dbpassword, dbname)
+  print(db_auth_status)
   
   if db_ins is None:
     response = jsonify({"status": "400", "data": "DB connection is failed"})
