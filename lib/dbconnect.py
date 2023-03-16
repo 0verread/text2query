@@ -7,7 +7,7 @@ database = "gystdb"
 host = "localhost"
 port = ""
 user = "root"
-password = "newpassword"
+password = ""
 
 def connect_db(user, password, database):
     db = mysqldb.connect(user=user,password=password, database=database)

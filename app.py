@@ -12,8 +12,8 @@ from slack_bolt import App, Say
 from slack_bolt.adapter.flask import SlackRequestHandler
 from flask_mysqldb import MySQL
 
-sys.path.insert(0, '/Users/subhajit/workspace/text2query/lib/')
-from dbconnect import connect_db, exe_query 
+# sys.path.insert(0, '/Users/subhajit/workspace/text2query/lib/')
+from lib.dbconnect import connect_db, exe_query 
 
 
 
@@ -94,9 +94,9 @@ def db_connnection():
 # @app.route('/auth', methods=['POST'])
 def db_auth(dbuser, dbpassword, dbname):
   response = None
-  if not request.json : 
-    response.status = "400"
-    response.data = "No data is provided"
+  # if not request.json : 
+  #   response.status = "400"
+  #   response.data = "No data is provided"
 
   app.config['MYSQL_USER'] = dbuser
   app.config['MYSQL_PASSWORD'] = dbpassword
@@ -106,8 +106,10 @@ def db_auth(dbuser, dbpassword, dbname):
     db_ins = connect_db(dbuser, dbpassword, dbname)
     response = jsonify({"status": "200", "data": "Connection established"})
   except Exception as e:
-    response = jsonify({"status": "400", "data": "Connection could not be established"})
+    response = jsonify({"status": "400", "data": "Connection could not be established", "error": e})
   return response
+
+
 
 """ Right now, you have to pass SQL query to test this API
     TODO: It takes query in natural lang, retrun result"""
