@@ -1,4 +1,5 @@
 import os
+import uuid
 
 import MySQLdb as mysqldb
 
@@ -24,7 +25,10 @@ def get_columns(db, table):
     ins.execute(getColNamesStmt)
     print(ins.fetchall())
 
-# c=db.cursor()
-# max_price=5
-# c.execute("""SELECT * from todolist""")
-# print(c.fetchall())
+def getApiKey(user, password, dbname):
+    api_key = None
+    db_instance = connect_db(user, password, dbname)
+    if db_instance is not None:
+        api_key = str(uuid.uuid4())
+
+    return api_key

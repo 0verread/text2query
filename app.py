@@ -12,8 +12,7 @@ from slack_bolt import App, Say
 from slack_bolt.adapter.flask import SlackRequestHandler
 from flask_mysqldb import MySQL
 
-# sys.path.insert(0, '/Users/subhajit/workspace/text2query/lib/')
-from lib.dbconnect import connect_db, exe_query 
+from lib.dbconnect import connect_db, exe_query, getApiKey 
 
 
 
@@ -76,61 +75,43 @@ def db_connnection():
   cursor = conn.cursor()
   cursor.execute("SELECT * FROM employees")
   print(cursor.fetchall())
-  # print('coming here')
 
-
-# @app.route('/test', methods=['POST', 'GET'])
-# def final():
-#   password = "newpassword"
-#   user = "root"
-#   database = "gystdb"
-#   db_ins = connect_db(user, password, database)
-#   res = exe_query(db_ins, "Select * from todolist")
-#   print(type(res))
-#   print(jsonify(res))
-#   # dbconnect.get_columns(db_ins, "todolist")
-#   return {"status": "200", "data": res}
-
-# @app.route('/auth', methods=['POST'])
-def db_auth(dbuser, dbpassword, dbname):
+@app.route('/auth', methods=['POST'])
+def db_auth():
   response = None
-  # if not request.json : 
-  #   response.status = "400"
-  #   response.data = "No data is provided"
-
-  app.config['MYSQL_USER'] = dbuser
-  app.config['MYSQL_PASSWORD'] = dbpassword
-  app.config['MYSQL_DB'] = dbname
-  try:
-    global db_ins
-    db_ins = connect_db(dbuser, dbpassword, dbname)
-    response = jsonify({"status": "200", "data": "Connection established"})
-  except Exception as e:
-    response = jsonify({"status": "400", "data": "Connection could not be established", "error": e})
-  return response
-
-
-
-""" Right now, you have to pass SQL query to test this API
-    TODO: It takes query in natural lang, retrun result"""
-
-@app.route('/query', methods=['POST'])
-def query():
-  global db_ins
-  response = None
-  query = request.json['query']
+  if not request.json : 
+    response.status = "400"
+    response.data = "No data is provided"
 
   dbpassword = request.json['dbpassword']
   dbuser = request.json['dbuser']
   dbname = request.json['dbname']
 
-  db_auth_status = db_auth(dbuser, dbpassword, dbname)
-  print(db_auth_status)
-  
-  if db_ins is None:
-    response = jsonify({"status": "400", "data": "DB connection is failed"})
-    return response
-  res = exe_query(db_ins, query)
+  try:
+    global db_ins
+    api_key = getApiKey(dbuser, dbpassword, dbname)
+    if api_key is not None:
+      response = jsonify({"status": "200", "data": "Connection established", "API_Key": api_key})
+    else:
+      response = jsonify({"status": "400", "data": "Could not create API key. ", "API_Key": api_key})
+  except Exception as e:
+    response = jsonify({"status": "400", "data": "Connection could not be established"})
+  return response
+
+
+""" Right now, you have to pass SQL query to test this API
+    TODO: It takes query in natural lang, retrun result"""
+@app.route('/query', methods=['POST'])
+def query():
+  global db_ins
+  response = None
+  api_key = request.json.get('api_key')
+  query = request.json.get('query')
+
+  if api_key:
+    res = exe_query(db_ins, query)
+  else:  
+    res = "API key is not provided"
   response = jsonify({"status": "200", "data": res})
   return response
 
