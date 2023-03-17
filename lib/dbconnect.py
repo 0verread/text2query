@@ -8,13 +8,13 @@ database = "gystdb"
 host = "localhost"
 port = ""
 user = "root"
-password = ""
+password = "newpassword"
 
 def connect_db(user, password, database):
     db = mysqldb.connect(user=user,password=password, database=database)
     return db
 
-def exe_query(db, query):
+def exe_query(api_key, query):
     c = db.cursor()
     c.execute(query)
     return c.fetchall()

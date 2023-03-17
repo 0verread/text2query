@@ -23,17 +23,6 @@ openai.api_key = os.environ['OPENAI_API_KEY']
 
 db_ins  = None
 
-# database variables
-# database = os.environ['DATABASE']
-# host = os.environ['HOST']
-# port = os.environ['PORT']
-# user = os.environ['USER']
-# password = os.environ['PASSWORD']
-
-# make prompt more dynamic
-  #  - Get columns using pandas
-  #  - 
-# show output in a table like UI
 
 def makeit(prompt):
   response = openai.Completion.create(
@@ -109,7 +98,7 @@ def query():
   query = request.json.get('query')
 
   if api_key:
-    res = exe_query(db_ins, query)
+    res = exe_query(api_key, query)
   else:  
     res = "API key is not provided"
   response = jsonify({"status": "200", "data": res})
