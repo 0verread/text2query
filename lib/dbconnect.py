@@ -30,5 +30,7 @@ def getApiKey(user, password, dbname):
     db_instance = connect_db(user, password, dbname)
     if db_instance is not None:
         api_key = str(uuid.uuid4())
-
+        curr = db_instance.cursor()
+        curr.execute('INSERT INTO dbapikey (dbname, user, password, apikey) values (%s, %s, %s, %s)', (dbname, user, password, api_key))
+        db_instance.commit()
     return api_key
