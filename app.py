@@ -97,7 +97,9 @@ def query():
   api_key = request.json.get('api_key')
   query = request.json.get('query')
 
+  # TODO: check if API key is valid
   if api_key:
+    
     res = exe_query(api_key, query)
   else:  
     res = "API key is not provided"
