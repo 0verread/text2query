@@ -99,7 +99,7 @@ def query():
 
   # TODO: check if API key is valid
   if api_key:
-    
+
     res = exe_query(api_key, query)
   else:  
     res = "API key is not provided"
@@ -141,12 +141,5 @@ def not_found(error):
 
 
 if __name__ == "__main__":
-  # provided_prompt_str = sys.argv[1]
-  # db_connnection()
-  # final_prompt = "{}{}".format('A query to get', provided_prompt_str)
-  # response = makeit(final_prompt)
-  # query = response.replace("\n", " ")
-  # input_file = "assets/employees.csv"
-  # run_csvsql_query(input_file, query)
   app.run(host='0.0.0.0', port=3030, debug=False)
   

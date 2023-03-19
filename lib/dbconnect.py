@@ -44,8 +44,7 @@ def db_config_by_apikey(api_key):
     db_instance = connect_db()
     curr = db_instance.cursor()
     if api_key:
-        # print(stmt)
-        curr.execute("SELECT * FROM dbapikey WHERE apikey = {}".format(api_key))
+        curr.execute('SELECT * FROM dbapikey WHERE apikey = %s', (api_key))
         return curr.fetchall()
     return None
 
