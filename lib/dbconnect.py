@@ -14,12 +14,21 @@ def connect_db():
     db = mysqldb.connect(user=user,password=password, database=database)
     return db
 
-def connect_cust_db(user, password, dbname):
-    cust_db = mysqldb.connect()
+def connect_cust_db(user, password, dbname, host=None, port=None):
+    cust_db = mysqldb.connect(user=user,password=password, database=dbname)
+    return cust_db
 
 def exe_query(api_key, query):
     db_config = db_config_by_apikey(api_key)
-    print(db_config)
+
+    # Get DB config
+    db_con = db_config[0][1:4]
+    dbname = db_con[0]
+    user = db_con[1]
+    password = db_con[2]
+
+    # making DB connection
+    db = connect_cust_db(user, password, dbname)
     c = db.cursor()
     c.execute(query)
     return c.fetchall()
@@ -44,7 +53,7 @@ def db_config_by_apikey(api_key):
     db_instance = connect_db()
     curr = db_instance.cursor()
     if api_key:
-        curr.execute('SELECT * FROM dbapikey WHERE apikey = %s', (api_key))
+        curr.execute('SELECT * FROM dbapikey WHERE apikey = %s', [api_key])
         return curr.fetchall()
     return None
 
