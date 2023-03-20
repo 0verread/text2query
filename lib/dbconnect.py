@@ -1,5 +1,7 @@
 import os
 import uuid
+import json
+import openai
 
 import MySQLdb as mysqldb
 
@@ -9,6 +11,23 @@ host = "localhost"
 port = ""
 user = "root"
 password = "newpassword"
+
+def makeit(prompt):
+  response = openai.Completion.create(
+    # model="code-davinci-002",
+    model="davinci-codex",
+    # prompt=prompt,
+    # prompt="### Postgres SQL tables, with their properties:\n#\n# Employee(id, name, department_id)\n# Department(id, name, address)\n# Salary_Payments(id, employee_id, amount, date)\n#\n### A query to get employees who salary is greater than 25000 \nSELECT",
+    # TODO: break this prompt string
+    prompt="### Postgres SQL tables, with their properties:\n#\n# todolist(title, description, isDone)\n#\n### {} \nSELECT".format(prompt),
+    temperature=0.5,
+    max_tokens=100,
+    top_p=1.0,
+    frequency_penalty=0.0,
+    presence_penalty=0.0,
+    stop=["#", ";"]
+  )
+  return response.choices[0].text
 
 def connect_db():
     db = mysqldb.connect(user=user,password=password, database=database)
@@ -21,6 +40,13 @@ def connect_cust_db(user, password, dbname, host=None, port=None):
 def exe_query(api_key, query):
     db_config = db_config_by_apikey(api_key)
 
+    # Get the query ready using OpenAI api
+    text_q = query
+    final_prompt = "{}{}".format('A query to get ', text_q)
+    sql_stmt = makeit(final_prompt)
+    print(final_prompt)
+    final_sql_q = sql_stmt.replace("\n", " ")
+    print(final_sql_q)
     # Get DB config
     db_con = db_config[0][1:4]
     dbname = db_con[0]
@@ -30,7 +56,9 @@ def exe_query(api_key, query):
     # making DB connection
     db = connect_cust_db(user, password, dbname)
     c = db.cursor()
-    c.execute(query)
+
+    # execute the sql stmt
+    c.execute('SELECT' + final_sql_q)
     return c.fetchall()
 
 def get_columns(db, table):

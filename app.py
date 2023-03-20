@@ -24,24 +24,6 @@ openai.api_key = os.environ['OPENAI_API_KEY']
 db_ins  = None
 
 
-def makeit(prompt):
-  response = openai.Completion.create(
-    # model="code-davinci-002",
-    model="davinci-codex",
-    # prompt=prompt,
-    # prompt="### Postgres SQL tables, with their properties:\n#\n# Employee(id, name, department_id)\n# Department(id, name, address)\n# Salary_Payments(id, employee_id, amount, date)\n#\n### A query to get employees who salary is greater than 25000 \nSELECT",
-    # TODO: break this prompt string
-    prompt="### Postgres SQL tables, with their properties:\n#\n# employees(EMPLOYEE_ID,FIRST_NAME,LAST_NAME,EMAIL,PHONE_NUMBER,HIRE_DATE,JOB_ID,SALARY,COMMISSION_PCT,MANAGER_ID,DEPARTMENT_ID)\n#\n### {} \nSELECT".format(prompt),
-    temperature=0.5,
-    max_tokens=100,
-    top_p=1.0,
-    frequency_penalty=0.0,
-    presence_penalty=0.0,
-    stop=["#", ";"]
-  )
-  return response.choices[0].text
-
-
 def run_csvsql_query(input_file, query):
   final_sql_query = '{}{}'.format('SELECT', query)
   args = ["--query", f"{final_sql_query}", input_file]
@@ -99,7 +81,6 @@ def query():
 
   # TODO: check if API key is valid
   if api_key:
-
     res = exe_query(api_key, query)
   else:  
     res = "API key is not provided"
