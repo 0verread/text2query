@@ -44,9 +44,8 @@ def exe_query(api_key, query):
     text_q = query
     final_prompt = "{}{}".format('A query to get ', text_q)
     sql_stmt = makeit(final_prompt)
-    print(final_prompt)
     final_sql_q = sql_stmt.replace("\n", " ")
-    print(final_sql_q)
+
     # Get DB config
     db_con = db_config[0][1:4]
     dbname = db_con[0]
