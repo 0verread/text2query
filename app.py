@@ -92,12 +92,6 @@ def query():
 def not_found(error):
   return jsonify({'error': 'Not found'})
 
-# @bolt_app.message("friday")
-# def greetings(payload: dict, say: Say):
-#   user: str = payload.get("user")
-#   say(f"Hello sir")
-
-
 # @bolt_app.command("/friday")
 # def real_do(ack, respond, command):
 #   ack()
