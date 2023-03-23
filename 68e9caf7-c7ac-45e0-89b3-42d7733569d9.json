@@ -1,0 +1,1 @@
+{"employees": {"emp_no": "integer", "birth_date": "timestamp without time zone", "hire_date": "timestamp without time zone", "first_name": "character varying", "last_name": "character varying"}, "departments": {"dept_no": "character", "dept_name": "character varying"}, "titles": {"emp_no": "integer", "from_date": "timestamp without time zone", "title": "character varying"}}

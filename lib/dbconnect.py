@@ -5,12 +5,13 @@ import openai
 
 import MySQLdb as mysqldb
 import psycopg2
+import json
 
 # get database details
 def makeit(prompt):
   response = openai.Completion.create(
     # model="code-davinci-002",
-    model="davinci-codex",
+    model="text-davinci-003",
     # prompt=prompt,
     # prompt="### Postgres SQL tables, with their properties:\n#\n# Employee(id, name, department_id)\n# Department(id, name, address)\n# Salary_Payments(id, employee_id, amount, date)\n#\n### A query to get employees who salary is greater than 25000 \nSELECT",
     # TODO: break this prompt string
@@ -22,6 +23,7 @@ def makeit(prompt):
     presence_penalty=0.0,
     stop=["#", ";"]
   )
+  # print(response.choices[0])
   return response.choices[0].text
 
 
@@ -56,11 +58,18 @@ def get_table_schema(curr, tables):
     for table in tables:
         curr.execute(f"SELECT column_name, data_type FROM information_schema.columns WHERE table_name='{table}'")
         columns = curr.fetchall()
-        # print(columns)
         schema = {column[0]: column[1] for column in columns}
         table_schemas[table] = schema
-    print(table_schemas)
+    # print(table_schemas)
     return table_schemas
+
+# Create prompt function
+def get_prompt(query, schema_file):
+    # Employee(id, name, department_id)\n# Department(id, name, address)\n#
+    table_string= []
+    file = open(schema_file, 'r')
+    print(file.read())
+    
 
 def exe_query(api_key, query):
     db_config = db_config_by_apikey(api_key)
@@ -80,7 +89,11 @@ def exe_query(api_key, query):
     # making DB connection: test postgres
     db = psqldb_connnection(dbname, user, password)
     c = db.cursor()
-    get_table_schema(c, ['employees','departments','titles'])
+    columns_schema = get_table_schema(c, ['employees','departments','titles'])
+    # Save it as a JSON file
+    file_name = api_key + '.json'
+    with open(file_name, 'w') as file:
+        json.dump(columns_schema, file)
     # execute the sql stmt
     c.execute('SELECT' + final_sql_q)
     return c.fetchall()
