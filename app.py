@@ -5,7 +5,6 @@ import os
 
 import subprocess
 import sys
-import psycopg2
 
 from flask import Flask, request, jsonify
 from slack_bolt import App, Say
@@ -35,17 +34,6 @@ def run_csvsql_query(input_file, query):
     # print(result.stdout)
     return result.stdout
 
-
-def db_connnection():
-  conn = psycopg2.connect(database=database,
-                          host=host,
-                          user=user,
-                          password=password,
-                          port=port)
-
-  cursor = conn.cursor()
-  cursor.execute("SELECT * FROM employees")
-  print(cursor.fetchall())
 
 @app.route('/auth', methods=['POST'])
 def db_auth():

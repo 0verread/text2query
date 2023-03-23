@@ -4,14 +4,9 @@ import json
 import openai
 
 import MySQLdb as mysqldb
+import psycopg2
 
 # get database details
-database = "gystdb"
-host = "localhost"
-port = ""
-user = "root"
-password = "newpassword"
-
 def makeit(prompt):
   response = openai.Completion.create(
     # model="code-davinci-002",
@@ -19,7 +14,7 @@ def makeit(prompt):
     # prompt=prompt,
     # prompt="### Postgres SQL tables, with their properties:\n#\n# Employee(id, name, department_id)\n# Department(id, name, address)\n# Salary_Payments(id, employee_id, amount, date)\n#\n### A query to get employees who salary is greater than 25000 \nSELECT",
     # TODO: break this prompt string
-    prompt="### Postgres SQL tables, with their properties:\n#\n# todolist(title, description, isDone)\n#\n### {} \nSELECT".format(prompt),
+    prompt="### Postgres SQL tables, with their properties:\n#\n# employees(emp_no, birth_date, first_name, last_name, hire_date)\n#\n### {} \nSELECT".format(prompt),
     temperature=0.5,
     max_tokens=100,
     top_p=1.0,
@@ -29,13 +24,43 @@ def makeit(prompt):
   )
   return response.choices[0].text
 
+
+def psqldb_connnection(database, user, password, host=None, port=None):
+  conn = psycopg2.connect(database=database,
+                          host=host,
+                          user=user,
+                          password=password,
+                          port=port)
+
+  cursor = conn.cursor()
+  # cursor.execute("SELECT * FROM employees limit 5")
+  return conn
+
 def connect_db():
+    database = "gystdb"
+    host = "localhost"
+    port = ""
+    user = "root"
+    password = "newpassword"
+
     db = mysqldb.connect(user=user,password=password, database=database)
     return db
 
 def connect_cust_db(user, password, dbname, host=None, port=None):
     cust_db = mysqldb.connect(user=user,password=password, database=dbname)
     return cust_db
+
+# Get table schema
+def get_table_schema(curr, tables):
+    table_schemas = {}
+    for table in tables:
+        curr.execute(f"SELECT column_name, data_type FROM information_schema.columns WHERE table_name='{table}'")
+        columns = curr.fetchall()
+        # print(columns)
+        schema = {column[0]: column[1] for column in columns}
+        table_schemas[table] = schema
+    print(table_schemas)
+    return table_schemas
 
 def exe_query(api_key, query):
     db_config = db_config_by_apikey(api_key)
@@ -52,10 +77,10 @@ def exe_query(api_key, query):
     user = db_con[1]
     password = db_con[2]
 
-    # making DB connection
-    db = connect_cust_db(user, password, dbname)
+    # making DB connection: test postgres
+    db = psqldb_connnection(dbname, user, password)
     c = db.cursor()
-
+    get_table_schema(c, ['employees','departments','titles'])
     # execute the sql stmt
     c.execute('SELECT' + final_sql_q)
     return c.fetchall()
