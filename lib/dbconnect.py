@@ -66,10 +66,17 @@ def get_table_schema(curr, tables):
 # Create prompt function
 def get_prompt(query, schema_file):
     # Employee(id, name, department_id)\n# Department(id, name, address)\n#
-    table_string= []
+    table_strings = []
     file = open(schema_file, 'r')
-    print(file.read())
-    
+    schema = json.loads(file.read())
+    for table_name, table_info in schema.items():
+        columns = [f"{col_name}" for col_name, col_type in table_info.items()]
+        table_string = f"{table_name}({', '.join(columns)})"
+        table_strings.append(table_string)
+    schema_part = '\\n# '.join(table_strings)
+    print()
+    return schema_part
+
 
 def exe_query(api_key, query):
     db_config = db_config_by_apikey(api_key)
@@ -94,6 +101,7 @@ def exe_query(api_key, query):
     file_name = api_key + '.json'
     with open(file_name, 'w') as file:
         json.dump(columns_schema, file)
+    table_schemas_str = get_prompt(query, file_name)
     # execute the sql stmt
     c.execute('SELECT' + final_sql_q)
     return c.fetchall()
