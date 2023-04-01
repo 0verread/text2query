@@ -70,6 +70,8 @@ def query():
   # TODO: check if API key is valid
   if api_key:
     res = exe_query(api_key, query)
+    print("res:" )
+    print(res)
   else:  
     res = "API key is not provided"
   response = jsonify({"status": "200", "data": res})
