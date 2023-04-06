@@ -16,7 +16,7 @@ from lib.dbconnect import connect_db, exe_query, getApiKey
 
 
 app = Flask(__name__)
-bolt_app = App(token=os.environ.get("SLACK_BOT_TOKEN"), signing_secret=os.environ.get("SLACK_SIGNING_SECRET"))
+# bolt_app = App(token=os.environ.get("SLACK_BOT_TOKEN"), signing_secret=os.environ.get("SLACK_SIGNING_SECRET"))
 
 openai.api_key = os.environ['OPENAI_API_KEY']
 
@@ -45,15 +45,17 @@ def db_auth():
   dbpassword = request.json['dbpassword']
   dbuser = request.json['dbuser']
   dbname = request.json['dbname']
+  name = request.json['name']
 
   try:
     global db_ins
-    api_key = getApiKey(dbuser, dbpassword, dbname)
+    api_key = getApiKey(name, dbuser, dbpassword, dbname)
     if api_key is not None:
       response = jsonify({"status": "200", "data": "Connection established", "API_Key": api_key})
     else:
       response = jsonify({"status": "400", "data": "Could not create API key. ", "API_Key": api_key})
   except Exception as e:
+    print(e)
     response = jsonify({"status": "400", "data": "Connection could not be established"})
   return response
 
@@ -81,29 +83,6 @@ def query():
 @app.errorhandler(404)
 def not_found(error):
   return jsonify({'error': 'Not found'})
-
-# @bolt_app.command("/friday")
-# def real_do(ack, respond, command):
-#   ack()
-#   question = command['text']
-#   final_prompt = "{}{}".format('A query to get', question)
-#   response = makeit(final_prompt)
-#   query = response.replace("\n", " ")
-#   input_file = "assets/employees.csv"
-#   ans = run_csvsql_query(input_file, query)
-#   res = "Your query: {}\n".format(question)
-#   final_res = "{}Answer:\n{}".format(res, ans)
-#   respond(final_res)
-
-
-
-# handler = SlackRequestHandler(bolt_app)
-
-# @app.route("/friday/events", methods=['POST'])
-# def slack_events():
-#   return handler.handle(request)
-
-
 
 if __name__ == "__main__":
   app.run(host='0.0.0.0', port=3030, debug=False)

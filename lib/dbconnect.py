@@ -2,10 +2,15 @@ import os
 import uuid
 import json
 import openai
+import datetime
+import string, random
 
 import MySQLdb as mysqldb
 import psycopg2
-import json
+
+
+from dotenv import load_dotenv
+load_dotenv()
 
 # get database details
 def makeit(table_schema, prompt):
@@ -25,10 +30,10 @@ def makeit(table_schema, prompt):
     presence_penalty=0.0,
     stop=["#", ";"]
   )
-  # print(response.choices[0])
   return response.choices[0].text
 
 
+# Support of postgresql
 def psqldb_connnection(database, user, password, host=None, port=None):
   conn = psycopg2.connect(database=database,
                           host=host,
@@ -37,17 +42,32 @@ def psqldb_connnection(database, user, password, host=None, port=None):
                           port=port)
 
   cursor = conn.cursor()
-  # cursor.execute("SELECT * FROM employees limit 5")
   return conn
 
-def connect_db():
-    database = "gystdb"
-    host = "localhost"
-    port = ""
-    user = "root"
-    password = "newpassword"
 
-    db = mysqldb.connect(user=user,password=password, database=database)
+# supoort of mysql DB
+def mysql_connection(user, password, dbname, host=None, port=None):
+    conn = mysqldb.connect(user=user, password=password, database=dbname)
+    return conn
+
+# plannetscale DB 
+def connect_db():
+    # database = "gystdb"
+    # host = "localhost"
+    # port = ""
+    # user = "root"
+    # password = "newpassword"
+
+    host = os.getenv("HOST")
+    user = os.getenv("DBUSER")
+    passwd = os.getenv("PASSWORD")
+    database = os.getenv("DATABASE")
+    ssl_mode = "VERIFY_IDENTITY"
+    ssl = {
+        "ca": "/etc/ssl/cert.pem"
+    }
+
+    db = mysqldb.connect(host=host, user=user, password=passwd, database=database, ssl_mode=ssl_mode, ssl=ssl)
     return db
 
 def connect_cust_db(user, password, dbname, host=None, port=None):
@@ -83,12 +103,11 @@ def exe_query(api_key, query):
 
     # Get DB config
     db_con = db_config[0][1:4]
-    dbname = db_con[0]
-    user = db_con[1]
-    password = db_con[2]
-
+    dbname = db_con[1]
+    user = db_con[2]
+    # password = db_con[3]
     # making DB connection: test postgres
-    db = psqldb_connnection(dbname, user, password)
+    db = psqldb_connnection(dbname, user, '')
     c = db.cursor()
     columns_schema = get_table_schema(c, ['employees','departments','titles', 'dept_manager', 'salaries', 'works_in'])
 
@@ -104,11 +123,9 @@ def exe_query(api_key, query):
     # print(table_schemas_str, type(table_schemas_str))
     sql_stmt = makeit(table_schemas_str, final_prompt)
     final_sql_q = sql_stmt.replace("\\n", " ").replace("\n", " ")
-    # final_sql_q = sql_stmt.
     # execute the sql stmt
-    print(final_sql_q)
-    c.execute('SELECT' + final_sql_q)
-    # print(c.fetchall())
+    # final_sql_q = getSqlStmt(query)
+    c.execute('select ' + final_sql_q)
     return c.fetchall()
 
 def get_columns(db, table):
@@ -117,13 +134,22 @@ def get_columns(db, table):
     ins.execute(getColNamesStmt)
     print(ins.fetchall())
 
-def getApiKey(user, password, dbname):
+def getId():
+    size = 6
+    chars= string.ascii_uppercase + string.digits
+    id  = ''.join(random.choices(chars, k=size))
+    return id
+
+def getApiKey(name, dbuser, dbpassword, dbname):
     api_key = None
     db_instance = connect_db()
+    id = getId()
     if db_instance is not None:
-        api_key = str(uuid.uuid4())
+        api_key = 'orai' + str(uuid.uuid4())
         curr = db_instance.cursor()
-        curr.execute('INSERT INTO dbapikey (dbname, user, password, apikey) values (%s, %s, %s, %s)', (dbname, user, password, api_key))
+        now = datetime.datetime.now()
+        curr.execute('INSERT INTO customers (id, name, dbname, dbuser, dbpassword, apikey, totalapicall, created_at) values (%s, %s, %s, %s, %s, %s, %s, %s)', 
+                     (id, name, dbname, dbuser, dbpassword, api_key, 0, now))
         db_instance.commit()
     return api_key
 
@@ -131,7 +157,7 @@ def db_config_by_apikey(api_key):
     db_instance = connect_db()
     curr = db_instance.cursor()
     if api_key:
-        curr.execute('SELECT * FROM dbapikey WHERE apikey = %s', [api_key])
+        curr.execute('SELECT * FROM customers WHERE apikey = %s', [api_key])
         return curr.fetchall()
     return None
 
