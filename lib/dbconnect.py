@@ -6,7 +6,10 @@ import datetime
 import string, random
 
 import MySQLdb as mysqldb
+# import pymysql
 import psycopg2
+import bcrypt
+# from pg import DB
 
 
 from dotenv import load_dotenv
@@ -52,12 +55,6 @@ def mysql_connection(user, password, dbname, host=None, port=None):
 
 # plannetscale DB 
 def connect_db():
-    # database = "gystdb"
-    # host = "localhost"
-    # port = ""
-    # user = "root"
-    # password = "newpassword"
-
     host = os.getenv("HOST")
     user = os.getenv("DBUSER")
     passwd = os.getenv("PASSWORD")
@@ -134,22 +131,26 @@ def get_columns(db, table):
     ins.execute(getColNamesStmt)
     print(ins.fetchall())
 
-def getId():
+def getId(prefix):
     size = 6
     chars= string.ascii_uppercase + string.digits
-    id  = ''.join(random.choices(chars, k=size))
+    id  = prefix + ''.join(random.choices(chars, k=size))
     return id
+
+def getHashedPass(password):
+    return bcrypt.hashpw(password, bcrypt.gensalt(10))
 
 def getApiKey(name, dbuser, dbpassword, dbname):
     api_key = None
     db_instance = connect_db()
-    id = getId()
+    id = getId('org')
+    hashed_passwd = getHashedPass(dbpassword)
     if db_instance is not None:
-        api_key = 'orai' + str(uuid.uuid4())
+        api_key = 'orai-' + str(uuid.uuid4())
         curr = db_instance.cursor()
         now = datetime.datetime.now()
         curr.execute('INSERT INTO customers (id, name, dbname, dbuser, dbpassword, apikey, totalapicall, created_at) values (%s, %s, %s, %s, %s, %s, %s, %s)', 
-                     (id, name, dbname, dbuser, dbpassword, api_key, 0, now))
+                     (id, name, dbname, dbuser, hashed_passwd, api_key, 0, now))
         db_instance.commit()
     return api_key
 

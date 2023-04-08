@@ -4,19 +4,19 @@ import openai
 import os
 
 import subprocess
-import sys
 
 from flask import Flask, request, jsonify
-from slack_bolt import App, Say
-from slack_bolt.adapter.flask import SlackRequestHandler
-from flask_mysqldb import MySQL
 
-from lib.dbconnect import connect_db, exe_query, getApiKey 
+# For future use
+# from flask_restful import Resource, Api
+
+# internal libs
+import lib.dbconnect 
 
 
 
 app = Flask(__name__)
-# bolt_app = App(token=os.environ.get("SLACK_BOT_TOKEN"), signing_secret=os.environ.get("SLACK_SIGNING_SECRET"))
+# api = Api(app)
 
 openai.api_key = os.environ['OPENAI_API_KEY']
 
@@ -35,6 +35,10 @@ def run_csvsql_query(input_file, query):
     return result.stdout
 
 
+@app.route('/')
+def home():
+  return jsonify({"status": "200", "data": 'Orgate AI api'})
+
 @app.route('/auth', methods=['POST'])
 def db_auth():
   response = None
@@ -49,13 +53,12 @@ def db_auth():
 
   try:
     global db_ins
-    api_key = getApiKey(name, dbuser, dbpassword, dbname)
+    api_key = lib.dbconnect.getApiKey(name, dbuser, dbpassword, dbname)
     if api_key is not None:
       response = jsonify({"status": "200", "data": "Connection established", "API_Key": api_key})
     else:
       response = jsonify({"status": "400", "data": "Could not create API key. ", "API_Key": api_key})
   except Exception as e:
-    print(e)
     response = jsonify({"status": "400", "data": "Connection could not be established"})
   return response
 
@@ -71,9 +74,7 @@ def query():
 
   # TODO: check if API key is valid
   if api_key:
-    res = exe_query(api_key, query)
-    print("res:" )
-    print(res)
+    res = lib.dbconnect.exe_query(api_key, query)
   else:  
     res = "API key is not provided"
   response = jsonify({"status": "200", "data": res})
@@ -85,5 +86,5 @@ def not_found(error):
   return jsonify({'error': 'Not found'})
 
 if __name__ == "__main__":
-  app.run(host='0.0.0.0', port=3030, debug=False)
+  app.run(host='0.0.0.0', port=3000, debug=False)
   
