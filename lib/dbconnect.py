@@ -6,13 +6,12 @@ import datetime
 import string, random
 
 import MySQLdb as mysqldb
-# import pymysql
 import psycopg2
 import bcrypt
-# from pg import DB
 
 
 from dotenv import load_dotenv
+
 load_dotenv()
 
 # get database details
@@ -36,15 +35,19 @@ def makeit(table_schema, prompt):
   return response.choices[0].text
 
 
+""" 
+All this functions are designed to create a connection with Customer DB.
+Right now, we have support for PostgresQL and MySQL database.
+"""
+
 # Support of postgresql
-def psqldb_connnection(database, user, password, host=None, port=None):
-  conn = psycopg2.connect(database=database,
+def psqldb_connnection(user, password, dbname, host=None, port=None):
+  conn = psycopg2.connect(database=dbname,
                           host=host,
                           user=user,
                           password=password,
                           port=port)
 
-  cursor = conn.cursor()
   return conn
 
 
@@ -53,7 +56,34 @@ def mysql_connection(user, password, dbname, host=None, port=None):
     conn = mysqldb.connect(user=user, password=password, database=dbname)
     return conn
 
-# plannetscale DB 
+# Customer DB connector controller 
+def connect_cust_db(dbtype, db_config):
+    if dbtype == "MySQL":
+        return mysql_connection(user, password, dbname, host, port)
+    elif dbtype == "PostgresSQL":
+        return psqldb_connnection(user, password, dbname, host, port)
+    return None
+
+# --------------------------------------------------------------------------- #
+
+"""
+This are lib functions. pretty generic
+TODO: move to a separate file
+"""
+
+def getId(prefix):
+    size = 6
+    chars= string.ascii_uppercase + string.digits
+    id  = prefix + ''.join(random.choices(chars, k=size))
+    return id
+
+def getHashedPass(password):
+    return bcrypt.hashpw(password, bcrypt.gensalt(10))
+
+# ---------------------------------------------------------------------------------- #
+
+
+# plannetscale DB : Our prod DB
 def connect_db():
     host = os.getenv("HOST")
     user = os.getenv("DBUSER")
@@ -66,11 +96,6 @@ def connect_db():
 
     db = mysqldb.connect(host=host, user=user, password=passwd, database=database, ssl_mode=ssl_mode, ssl=ssl)
     return db
-
-def connect_cust_db(user, password, dbname, host=None, port=None):
-    cust_db = mysqldb.connect(user=user,password=password, database=dbname)
-    return cust_db
-
 # Get table schema
 def get_table_schema(curr, tables):
     table_schemas = {}
@@ -83,7 +108,6 @@ def get_table_schema(curr, tables):
 
 # Create prompt
 def get_prompt(query, schema_file):
-    # Employee(id, name, department_id)\n# Department(id, name, address)\n#
     table_strings = []
     file = open(schema_file, 'r')
     schema = json.loads(file.read())
@@ -103,9 +127,12 @@ def exe_query(api_key, query):
     dbname = db_con[1]
     user = db_con[2]
     # password = db_con[3]
+
     # making DB connection: test postgres
-    db = psqldb_connnection(dbname, user, '')
+    db = psqldb_connnection(user, '', dbname)
     c = db.cursor()
+
+    # TODO: tables name should be dynamic
     columns_schema = get_table_schema(c, ['employees','departments','titles', 'dept_manager', 'salaries', 'works_in'])
 
     # Get the query ready using OpenAI api
@@ -115,6 +142,8 @@ def exe_query(api_key, query):
     # Save it as a JSON file
     file_name = api_key + '.json'
     with open(file_name, 'w') as file:
+        db_schema = {"dbname": dbname, "table_schema": [columns_schema]}
+        print(db_schema)
         json.dump(columns_schema, file)
     table_schemas_str = get_prompt(query, file_name) + ''
     # print(table_schemas_str, type(table_schemas_str))
@@ -130,15 +159,6 @@ def get_columns(db, table):
     getColNamesStmt = "describe " + table
     ins.execute(getColNamesStmt)
     print(ins.fetchall())
-
-def getId(prefix):
-    size = 6
-    chars= string.ascii_uppercase + string.digits
-    id  = prefix + ''.join(random.choices(chars, k=size))
-    return id
-
-def getHashedPass(password):
-    return bcrypt.hashpw(password, bcrypt.gensalt(10))
 
 def getApiKey(name, dbuser, dbpassword, dbname):
     api_key = None
