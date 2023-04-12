@@ -34,7 +34,11 @@ def makeit(table_schema, prompt):
   )
   return response.choices[0].text
 
+def getConfig(db_config):
+    return None
 
+
+# --------------------------------------------------------------------------------------- #
 """ 
 All this functions are designed to create a connection with Customer DB.
 Right now, we have support for PostgresQL and MySQL database.
@@ -58,6 +62,7 @@ def mysql_connection(user, password, dbname, host=None, port=None):
 
 # Customer DB connector controller 
 def connect_cust_db(dbtype, db_config):
+    dbname, user, password, host = getConfig(db_config)
     if dbtype == "MySQL":
         return mysql_connection(user, password, dbname, host, port)
     elif dbtype == "PostgresSQL":
