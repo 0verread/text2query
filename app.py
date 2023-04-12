@@ -59,6 +59,7 @@ def db_auth():
     else:
       response = jsonify({"status": "400", "data": "Could not create API key. ", "API_Key": api_key})
   except Exception as e:
+    print(e)
     response = jsonify({"status": "400", "data": "Connection could not be established"})
   return response
 

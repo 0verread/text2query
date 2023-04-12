@@ -57,16 +57,16 @@ def psqldb_connnection(user, password, dbname, host=None, port=None):
 
 # supoort of mysql DB
 def mysql_connection(user, password, dbname, host=None, port=None):
-    conn = mysqldb.connect(user=user, password=password, database=dbname)
+    conn = mysqldb.connect(user=user, password=password, database=dbname, host=host)
     return conn
 
 # Customer DB connector controller 
 def connect_cust_db(dbtype, db_config):
     dbname, user, password, host = getConfig(db_config)
     if dbtype == "MySQL":
-        return mysql_connection(user, password, dbname, host, port)
+        return mysql_connection(user, password, dbname, host)
     elif dbtype == "PostgresSQL":
-        return psqldb_connnection(user, password, dbname, host, port)
+        return psqldb_connnection(user, password, dbname, host)
     return None
 
 # --------------------------------------------------------------------------- #
@@ -83,7 +83,18 @@ def getId(prefix):
     return id
 
 def getHashedPass(password):
-    return bcrypt.hashpw(password, bcrypt.gensalt(10))
+    return bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt(10))
+
+def get_file_name(api_key, dbname):
+    return f'{api_key}_{dbname}.json'
+
+def get_api_key():
+    return 'orai-' + str(uuid.uuid4())
+
+def get_dbconfig(dbname, dbuser, dbpassword, host):
+    hashed_pass = getHashedPass(dbpassword)
+    config = {"dbuser": dbuser, "dbpassword": hashed_pass, "host": host}
+    return {dbname : config}
 
 # ---------------------------------------------------------------------------------- #
 
@@ -145,13 +156,11 @@ def exe_query(api_key, query):
     final_prompt = "{}{}".format('A query to get ', text_q)
     
     # Save it as a JSON file
-    file_name = api_key + '.json'
+    file_name = get_file_name(api_key, dbname)
+
     with open(file_name, 'w') as file:
-        db_schema = {"dbname": dbname, "table_schema": [columns_schema]}
-        print(db_schema)
         json.dump(columns_schema, file)
     table_schemas_str = get_prompt(query, file_name) + ''
-    # print(table_schemas_str, type(table_schemas_str))
     sql_stmt = makeit(table_schemas_str, final_prompt)
     final_sql_q = sql_stmt.replace("\\n", " ").replace("\n", " ")
     # execute the sql stmt
@@ -165,14 +174,17 @@ def get_columns(db, table):
     ins.execute(getColNamesStmt)
     print(ins.fetchall())
 
-def getApiKey(name, dbuser, dbpassword, dbname):
+def getApiKey(name, dbuser, dbpassword, dbname, host=None):
     api_key = None
+    # TODO: Shoudn't be connecting everytime making api call
     db_instance = connect_db()
     id = getId('org')
     hashed_passwd = getHashedPass(dbpassword)
     if db_instance is not None:
-        api_key = 'orai-' + str(uuid.uuid4())
+        api_key = get_api_key()
         curr = db_instance.cursor()
+        dbconfig = get_dbconfig(dbname, dbuser, dbpassword, host)
+        print(dbconfig)
         now = datetime.datetime.now()
         curr.execute('INSERT INTO customers (id, name, dbname, dbuser, dbpassword, apikey, totalapicall, created_at) values (%s, %s, %s, %s, %s, %s, %s, %s)', 
                      (id, name, dbname, dbuser, hashed_passwd, api_key, 0, now))
