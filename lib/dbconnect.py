@@ -93,8 +93,8 @@ def get_api_key():
 
 def get_dbconfig(dbname, dbuser, dbpassword, host):
     hashed_pass = getHashedPass(dbpassword)
-    config = {"dbuser": dbuser, "dbpassword": hashed_pass, "host": host}
-    return {dbname : config}
+    config = {"dbuser": dbuser, "dbpassword": hashed_pass.decode('utf-8'), "host": host}
+    return json.dumps({dbname : config})
 
 # ---------------------------------------------------------------------------------- #
 
@@ -163,8 +163,6 @@ def exe_query(api_key, query):
     table_schemas_str = get_prompt(query, file_name) + ''
     sql_stmt = makeit(table_schemas_str, final_prompt)
     final_sql_q = sql_stmt.replace("\\n", " ").replace("\n", " ")
-    # execute the sql stmt
-    # final_sql_q = getSqlStmt(query)
     c.execute('select ' + final_sql_q)
     return c.fetchall()
 
@@ -179,15 +177,13 @@ def getApiKey(name, dbuser, dbpassword, dbname, host=None):
     # TODO: Shoudn't be connecting everytime making api call
     db_instance = connect_db()
     id = getId('org')
-    hashed_passwd = getHashedPass(dbpassword)
     if db_instance is not None:
         api_key = get_api_key()
         curr = db_instance.cursor()
         dbconfig = get_dbconfig(dbname, dbuser, dbpassword, host)
-        print(dbconfig)
         now = datetime.datetime.now()
-        curr.execute('INSERT INTO customers (id, name, dbname, dbuser, dbpassword, apikey, totalapicall, created_at) values (%s, %s, %s, %s, %s, %s, %s, %s)', 
-                     (id, name, dbname, dbuser, hashed_passwd, api_key, 0, now))
+        curr.execute('INSERT INTO customers (id, name, apikey, totalapicall, created_at, dbconfig) values (%s, %s, %s, %s, %s, %s)', 
+                     (id, name, api_key, 0, now, dbconfig))
         db_instance.commit()
     return api_key
 
@@ -195,7 +191,7 @@ def db_config_by_apikey(api_key):
     db_instance = connect_db()
     curr = db_instance.cursor()
     if api_key:
-        curr.execute('SELECT * FROM customers WHERE apikey = %s', [api_key])
+        curr.execute('SELECT dbconfig FROM customers WHERE apikey = %s', [api_key])
         return curr.fetchall()
     return None
 
