@@ -78,11 +78,10 @@ def config():
   file_name = lib.dbconnect.save_schema_file(api_key, table_schema)
   
   if file_name:
-    response.status = "200"
-    response.data = "Success"
+    response = jsonify({"status": "200", "data": "Success"})
   else:
-    response.status= "400"
-    response.data =  "Something went wrong."
+    response = jsonify({"status": "200", "data": "Something went wrong."})
+
   return response
 
 """ Right now, you have to pass SQL query to test this API

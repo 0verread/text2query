@@ -163,7 +163,9 @@ def get_table_schema(api_key, tables):
     conn = get_dbconn_by_apikey(api_key)
     curr = conn.cursor()
     table_schemas = {}
+    print(tables)
     for table in tables:
+        print(table)
         curr.execute(f"SELECT column_name, data_type FROM information_schema.columns WHERE table_name='{table}'")
         columns = curr.fetchall()
         schema = {column[0]: column[1] for column in columns}
