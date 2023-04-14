@@ -136,14 +136,15 @@ def get_prompt(query, schema_file):
 
 
 def exe_query(api_key, query):
-    db_config = db_config_by_apikey(api_key)
+    db_config = list(zip(db_config_by_apikey(api_key)))
+    json_part = json.dumps(db_config[0][0][0])
 
+    print(db_config)
     # Get DB config
     db_con = db_config[0][1:4]
     dbname = db_con[1]
     user = db_con[2]
     # password = db_con[3]
-
     # making DB connection: test postgres
     db = psqldb_connnection(user, '', dbname)
     c = db.cursor()
