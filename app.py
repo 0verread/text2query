@@ -44,7 +44,7 @@ def db_auth():
   response = None
   if not request.json : 
     response.status = "400"
-    response.data = "No data is provided"
+    response.data = "No data provided"
 
   dbpassword = request.json['dbpassword']
   dbuser = request.json['dbuser']
@@ -63,6 +63,27 @@ def db_auth():
     response = jsonify({"status": "400", "data": "Connection could not be established"})
   return response
 
+@app.route('/config', methods=['POST'])
+def config():
+  response = None
+
+  if not request.json :
+    response.status = "400"
+    response.data = "No data provided"
+  
+  allowed_tables = request.json['tables']
+  api_key = request.json.get('api_key')
+
+  table_schema = lib.dbconnect.get_table_schema(api_key, allowed_tables)
+  file_name = lib.dbconnect.save_schema_file(api_key, table_schema)
+  
+  if file_name:
+    response.status = "200"
+    response.data = "Success"
+  else:
+    response.status= "400"
+    response.data =  "Something went wrong."
+  return response
 
 """ Right now, you have to pass SQL query to test this API
     TODO: It takes query in natural lang, retrun result"""

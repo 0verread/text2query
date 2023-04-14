@@ -34,6 +34,25 @@ def makeit(table_schema, prompt):
   )
   return response.choices[0].text
 
+
+def get_dbconn_by_apikey(api_key):
+    db_config = list(zip(db_config_by_apikey(api_key)))
+    db_config_str = db_config[0][0][0]
+    db_config_dict = json.loads(db_config_str)
+
+    # Get DB config
+    # db_con = db_config[0][1:4]
+    dbname = list(db_config_dict.keys())[0]
+    config = list(db_config_dict.values())[0]
+
+    host, user, password = getConfig(config.values()) 
+
+    # making DB connection: test postgres
+    # db  = psqldb_connnection(user, password, dbname, host)
+    # For localhost DB
+    db = psqldb_connnection(user, '', dbname)
+    return db
+
 # --------------------------------------------------------------------------------------- #
 """ 
 All this functions are designed to create a connection with Customer DB.
@@ -113,8 +132,36 @@ def connect_db():
 
     db = mysqldb.connect(host=host, user=user, password=passwd, database=database, ssl_mode=ssl_mode, ssl=ssl)
     return db
+
+def get_dbname_by_apikey(api_key):
+    db_config = list(zip(db_config_by_apikey(api_key)))
+    db_config_str = db_config[0][0][0]
+    db_config_dict = json.loads(db_config_str)
+
+    # Get DB config
+    dbname = list(db_config_dict.keys())[0]
+    return dbname
+
+
+def save_schema_file(api_key, table_schema):
+    # file_name = None
+
+    # db_config = list(zip(db_config_by_apikey(api_key)))
+    # db_config_str = db_config[0][0][0]
+    # db_config_dict = json.loads(db_config_str)
+
+    # Get DB config
+    dbname = get_dbname_by_apikey(api_key)
+    # Save it as a JSON file
+    file_name = get_file_name(api_key, dbname)
+    with open(file_name, 'w') as file:
+        json.dump(table_schema, file)
+    return file_name
+
 # Get table schema
-def get_table_schema(curr, tables):
+def get_table_schema(api_key, tables):
+    conn = get_dbconn_by_apikey(api_key)
+    curr = conn.cursor()
     table_schemas = {}
     for table in tables:
         curr.execute(f"SELECT column_name, data_type FROM information_schema.columns WHERE table_name='{table}'")
@@ -137,39 +184,25 @@ def get_prompt(query, schema_file):
 
 
 def exe_query(api_key, query):
-    db_config = list(zip(db_config_by_apikey(api_key)))
-    db_config_str = db_config[0][0][0]
-    db_config_dict = json.loads(db_config_str)
+    dbname = get_dbname_by_apikey(api_key)
 
-    # Get DB config
-    # db_con = db_config[0][1:4]
-    dbname = list(db_config_dict.keys())[0]
-    config = list(db_config_dict.values())[0]
+    conn = get_dbconn_by_apikey(api_key)
+    cur = conn.cursor()
 
-    host, user, password = getConfig(config.values()) 
-
-    # print(host, user, password, dbname)
-    # making DB connection: test postgres
-    db = psqldb_connnection(user, '', dbname)
-    c = db.cursor()
 
     # TODO: tables name should be dynamic
-    columns_schema = get_table_schema(c, ['employees','departments','titles', 'dept_manager', 'salaries', 'works_in'])
+    # columns_schema = get_table_schema(cur, ['employees','departments','titles', 'dept_manager', 'salaries', 'works_in'])
 
     # Get the query ready using OpenAI api
     text_q = query
     final_prompt = "{}{}".format('A query to get ', text_q)
-    
-    # Save it as a JSON file
-    file_name = get_file_name(api_key, dbname)
 
-    with open(file_name, 'w') as file:
-        json.dump(columns_schema, file)
+    file_name = get_file_name(api_key, dbname)
     table_schemas_str = get_prompt(query, file_name) + ''
     sql_stmt = makeit(table_schemas_str, final_prompt)
     final_sql_q = sql_stmt.replace("\\n", " ").replace("\n", " ")
-    c.execute('select ' + final_sql_q)
-    return c.fetchall()
+    cur.execute('select ' + final_sql_q)
+    return cur.fetchall()
 
 def get_columns(db, table):
     ins = db.cursor()
