@@ -34,10 +34,6 @@ def makeit(table_schema, prompt):
   )
   return response.choices[0].text
 
-def getConfig(db_config):
-    return None
-
-
 # --------------------------------------------------------------------------------------- #
 """ 
 All this functions are designed to create a connection with Customer DB.
@@ -98,6 +94,11 @@ def get_dbconfig(dbname, dbuser, dbpassword, host):
 
 # ---------------------------------------------------------------------------------- #
 
+def getConfig(db_config):
+    config = list(db_config)
+    return config[0], config[1], config[2]
+
+# ------------------------------------------------------------------------------------ #
 
 # plannetscale DB : Our prod DB
 def connect_db():
@@ -137,14 +138,17 @@ def get_prompt(query, schema_file):
 
 def exe_query(api_key, query):
     db_config = list(zip(db_config_by_apikey(api_key)))
-    json_part = json.dumps(db_config[0][0][0])
+    db_config_str = db_config[0][0][0]
+    db_config_dict = json.loads(db_config_str)
 
-    print(db_config)
     # Get DB config
-    db_con = db_config[0][1:4]
-    dbname = db_con[1]
-    user = db_con[2]
-    # password = db_con[3]
+    # db_con = db_config[0][1:4]
+    dbname = list(db_config_dict.keys())[0]
+    config = list(db_config_dict.values())[0]
+
+    host, user, password = getConfig(config.values()) 
+
+    # print(host, user, password, dbname)
     # making DB connection: test postgres
     db = psqldb_connnection(user, '', dbname)
     c = db.cursor()

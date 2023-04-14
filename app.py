@@ -1,4 +1,4 @@
-#!./venv/bin/python
+#!./venv/bin/python3
 import json
 import openai
 import os
