@@ -34,25 +34,6 @@ def makeit(table_schema, prompt):
   )
   return response.choices[0].text
 
-
-def get_dbconn_by_apikey(api_key):
-    db_config = list(zip(db_config_by_apikey(api_key)))
-    db_config_str = db_config[0][0][0]
-    db_config_dict = json.loads(db_config_str)
-
-    # Get DB config
-    # db_con = db_config[0][1:4]
-    dbname = list(db_config_dict.keys())[0]
-    config = list(db_config_dict.values())[0]
-
-    host, user, password = getConfig(config.values()) 
-
-    # making DB connection: test postgres
-    # db  = psqldb_connnection(user, password, dbname, host)
-    # For localhost DB
-    db = psqldb_connnection(user, '', dbname)
-    return db
-
 # --------------------------------------------------------------------------------------- #
 """ 
 All this functions are designed to create a connection with Customer DB.
@@ -85,6 +66,39 @@ def connect_cust_db(dbtype, db_config):
     return None
 
 # --------------------------------------------------------------------------- #
+
+def db_config_by_apikey(api_key):
+    db_instance = connect_db()
+    curr = db_instance.cursor()
+    if api_key:
+        curr.execute('SELECT dbconfig FROM customers WHERE apikey = %s', [api_key])
+        return curr.fetchall()
+    return None
+
+
+def get_dbconn_by_apikey(api_key):
+    db_config = list(zip(db_config_by_apikey(api_key)))
+    db_config_str = db_config[0][0][0]
+    db_config_dict = json.loads(db_config_str)
+
+    # Get DB config
+    # db_con = db_config[0][1:4]
+    dbname = list(db_config_dict.keys())[0]
+    config = list(db_config_dict.values())[0]
+
+    host, user, password = getConfig(config.values()) 
+
+    # Check DB type and make conn accordingly
+    
+    # making DB connection: test postgres
+    db  = psqldb_connnection(user, password, dbname, host)
+    # For localhost DB
+    # db = psqldb_connnection(user, '', dbname)
+    return db
+
+
+# -------------------------------------------------------------------------------
+
 
 """
 This are lib functions. pretty generic
@@ -127,10 +141,10 @@ def connect_db():
     database = os.getenv("DATABASE")
     ssl_mode = "VERIFY_IDENTITY"
     ssl = {
-        "ca": "/etc/ssl/cert.pem"
+        "ca": "/etc/pki/tls/certs/ca-bundle.crt"
     }
 
-    db = mysqldb.connect(host=host, user=user, password=passwd, database=database, ssl_mode=ssl_mode, ssl=ssl)
+    db = mysqldb.connect(host=host, user=user, password=passwd, database=database)
     return db
 
 def get_dbname_by_apikey(api_key):
@@ -165,7 +179,6 @@ def get_table_schema(api_key, tables):
     table_schemas = {}
     print(tables)
     for table in tables:
-        print(table)
         curr.execute(f"SELECT column_name, data_type FROM information_schema.columns WHERE table_name='{table}'")
         columns = curr.fetchall()
         schema = {column[0]: column[1] for column in columns}
@@ -218,6 +231,7 @@ def getApiKey(name, dbuser, dbpassword, dbname, host=None):
     db_instance = connect_db()
     id = getId('org')
     if db_instance is not None:
+        # TODO: check if config is right before creating API key
         api_key = get_api_key()
         curr = db_instance.cursor()
         dbconfig = get_dbconfig(dbname, dbuser, dbpassword, host)
@@ -226,14 +240,6 @@ def getApiKey(name, dbuser, dbpassword, dbname, host=None):
                      (id, name, api_key, 0, now, dbconfig))
         db_instance.commit()
     return api_key
-
-def db_config_by_apikey(api_key):
-    db_instance = connect_db()
-    curr = db_instance.cursor()
-    if api_key:
-        curr.execute('SELECT dbconfig FROM customers WHERE apikey = %s', [api_key])
-        return curr.fetchall()
-    return None
 
 
 
