@@ -76,7 +76,7 @@ def db_config_by_apikey(api_key):
     return None
 
 
-def get_dbconn_by_apikey(api_key):
+def get_dbconn_by_apikey(db_type, api_key):
     db_config = list(zip(db_config_by_apikey(api_key)))
     db_config_str = db_config[0][0][0]
     db_config_dict = json.loads(db_config_str)
@@ -89,9 +89,11 @@ def get_dbconn_by_apikey(api_key):
     host, user, password = getConfig(config.values()) 
 
     # Check DB type and make conn accordingly
-    
+    if db_type.casefold() == "mysql":
+        db = mysql_connection()
+    elif db_type.casefold() == "postgresql":
+        db  = psqldb_connnection(user, password, dbname, host)
     # making DB connection: test postgres
-    db  = psqldb_connnection(user, password, dbname, host)
     # For localhost DB
     # db = psqldb_connnection(user, '', dbname)
     return db
@@ -173,8 +175,8 @@ def save_schema_file(api_key, table_schema):
     return file_name
 
 # Get table schema
-def get_table_schema(api_key, tables):
-    conn = get_dbconn_by_apikey(api_key)
+def get_table_schema(db_type, api_key, tables):
+    conn = get_dbconn_by_apikey(db_type, api_key)
     curr = conn.cursor()
     table_schemas = {}
     print(tables)

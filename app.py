@@ -53,7 +53,7 @@ def db_auth():
 
   try:
     global db_ins
-    api_key = lib.dbconnect.getApiKey(name, dbuser, dbpassword, dbname)
+    api_key = lib.dbconnect.getApiKey(name, dbuser, dbpassword, dbname, db_type)
     if api_key is not None:
       response = jsonify({"status": "200", "data": "Connection established", "API_Key": api_key})
     else:
@@ -73,9 +73,10 @@ def config():
   
   allowed_tables = request.json['tables']
   api_key = request.json.get('api_key')
+  db_type = request.json['db_type']
 
-  table_schema = lib.dbconnect.get_table_schema(api_key, allowed_tables)
-  file_name = lib.dbconnect.save_schema_file(api_key, table_schema)
+  table_schema = lib.dbconnect.get_table_schema(db_type, api_key, allowed_tables)
+  file_name = lib.dbconnect.save_schema_file(db_type, api_key, table_schema)
   
   if file_name:
     response = jsonify({"status": "200", "data": "Success"})
