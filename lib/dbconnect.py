@@ -92,10 +92,10 @@ def get_dbconn_by_apikey(db_type, api_key):
     if db_type.casefold() == "mysql":
         db = mysql_connection()
     elif db_type.casefold() == "postgresql":
-        db  = psqldb_connnection(user, password, dbname, host)
+        # For localhost DB
+        db = psqldb_connnection(user, '', dbname)
+        # db  = psqldb_connnection(user, password, dbname, host)
     # making DB connection: test postgres
-    # For localhost DB
-    # db = psqldb_connnection(user, '', dbname)
     return db
 
 
@@ -159,40 +159,41 @@ def get_dbname_by_apikey(api_key):
     return dbname
 
 
-def save_schema_file(api_key, table_schema):
+def save_schema_file(api_key, schema):
     # file_name = None
 
     # db_config = list(zip(db_config_by_apikey(api_key)))
     # db_config_str = db_config[0][0][0]
     # db_config_dict = json.loads(db_config_str)
 
-    # Get DB config
-    dbname = get_dbname_by_apikey(api_key)
+    # Get DB Name
+    dbname = schema.get('dbname')
     # Save it as a JSON file
     file_name = get_file_name(api_key, dbname)
     with open(file_name, 'w') as file:
-        json.dump(table_schema, file)
+        json.dump(schema, file)
     return file_name
 
 # Get table schema
 def get_table_schema(db_type, api_key, tables):
     conn = get_dbconn_by_apikey(db_type, api_key)
+    dbname = get_dbname_by_apikey(api_key)
     curr = conn.cursor()
     table_schemas = {}
-    print(tables)
     for table in tables:
         curr.execute(f"SELECT column_name, data_type FROM information_schema.columns WHERE table_name='{table}'")
         columns = curr.fetchall()
         schema = {column[0]: column[1] for column in columns}
         table_schemas[table] = schema
-    return table_schemas
+    return {"dbname":dbname, "dbtype": db_type, "schema": table_schemas}
 
 # Create prompt
 def get_prompt(query, schema_file):
     table_strings = []
     file = open(schema_file, 'r')
     schema = json.loads(file.read())
-    for table_name, table_info in schema.items():
+    table_schema = schema.get('schema')
+    for table_name, table_info in table_schema.items():
         columns = [f"{col_name}" for col_name, col_type in table_info.items()]
         table_string = f"{table_name}({', '.join(columns)})"
         table_strings.append(table_string)
@@ -202,8 +203,11 @@ def get_prompt(query, schema_file):
 
 def exe_query(api_key, query):
     dbname = get_dbname_by_apikey(api_key)
-
-    conn = get_dbconn_by_apikey(api_key)
+    config_file_name = get_file_name(api_key, dbname)
+    file = open(config_file_name, 'r')
+    schema = json.loads(file.read())
+    db_type = schema.get('dbtype')
+    conn = get_dbconn_by_apikey(db_type, api_key)
     cur = conn.cursor()
 
 

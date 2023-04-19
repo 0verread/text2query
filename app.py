@@ -76,7 +76,7 @@ def config():
   db_type = request.json['db_type']
 
   table_schema = lib.dbconnect.get_table_schema(db_type, api_key, allowed_tables)
-  file_name = lib.dbconnect.save_schema_file(db_type, api_key, table_schema)
+  file_name = lib.dbconnect.save_schema_file(api_key, table_schema)
   
   if file_name:
     response = jsonify({"status": "200", "data": "Success"})
