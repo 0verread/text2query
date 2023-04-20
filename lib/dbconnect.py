@@ -48,6 +48,7 @@ def psqldb_connnection(user, password, dbname, host=None, port=None):
                           password=password,
                           port=port)
 
+  print(conn)
   return conn
 
 
@@ -66,6 +67,11 @@ def connect_cust_db(dbtype, db_config):
     return None
 
 # --------------------------------------------------------------------------- #
+
+def getConfig(db_config):
+    config = list(db_config)
+    print(config)
+    return config[0], config[1], config[2]
 
 def db_config_by_apikey(api_key):
     db_instance = connect_db()
@@ -87,15 +93,18 @@ def get_dbconn_by_apikey(db_type, api_key):
     config = list(db_config_dict.values())[0]
 
     host, user, password = getConfig(config.values()) 
+    print(host, user, password, dbname)
 
     # Check DB type and make conn accordingly
     if db_type.casefold() == "mysql":
-        db = mysql_connection()
+        db = mysql_connection(user, password, dbname, host)
     elif db_type.casefold() == "postgresql":
         # For localhost DB
-        db = psqldb_connnection(user, '', dbname)
-        # db  = psqldb_connnection(user, password, dbname, host)
+        # db = psqldb_connnection(user, '', dbname)
+        print("Coming here in conn")
+        db  = psqldb_connnection(user, password, dbname, host)
     # making DB connection: test postgres
+    print("Coming here in conn")
     return db
 
 
@@ -128,10 +137,6 @@ def get_dbconfig(dbname, dbuser, dbpassword, host):
     return json.dumps({dbname : config})
 
 # ---------------------------------------------------------------------------------- #
-
-def getConfig(db_config):
-    config = list(db_config)
-    return config[0], config[1], config[2]
 
 # ------------------------------------------------------------------------------------ #
 
@@ -180,11 +185,14 @@ def get_table_schema(db_type, api_key, tables):
     dbname = get_dbname_by_apikey(api_key)
     curr = conn.cursor()
     table_schemas = {}
+    print(tables)
     for table in tables:
+        print(f"for table{table} coming here")
         curr.execute(f"SELECT column_name, data_type FROM information_schema.columns WHERE table_name='{table}'")
         columns = curr.fetchall()
         schema = {column[0]: column[1] for column in columns}
         table_schemas[table] = schema
+    print("coming here")
     return {"dbname":dbname, "dbtype": db_type, "schema": table_schemas}
 
 # Create prompt
@@ -231,7 +239,7 @@ def get_columns(db, table):
     ins.execute(getColNamesStmt)
     print(ins.fetchall())
 
-def getApiKey(name, dbuser, dbpassword, dbname, host=None):
+def getApiKey(name, dbuser, dbpassword, dbname, host):
     api_key = None
     # TODO: Shoudn't be connecting everytime making api call
     db_instance = connect_db()
