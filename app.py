@@ -51,6 +51,7 @@ def db_auth():
   dbname = request.json['dbname']
   name = request.json['name']
   host = request.json['host']
+  db_type = request.json.get('db_type')
 
   try:
     global db_ins
@@ -74,9 +75,9 @@ def config():
   
   allowed_tables = request.json['tables']
   api_key = request.json.get('api_key')
-  db_type = request.json['db_type']
+  db_config = request.json['db_config']
 
-  table_schema = lib.dbconnect.get_table_schema(db_type, api_key, allowed_tables)
+  table_schema = lib.dbconnect.get_table_schema(db_config, api_key, allowed_tables)
   file_name = lib.dbconnect.save_schema_file(api_key, table_schema)
   
   if file_name:

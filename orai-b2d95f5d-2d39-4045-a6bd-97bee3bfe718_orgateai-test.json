@@ -1,0 +1,1 @@
+{"dbname": "orgateai-test", "dbtype": "mysql", "schema": {"employees": {"email": "varchar", "employeeNumber": "int", "extension": "varchar", "firstName": "varchar", "jobTitle": "varchar", "lastName": "varchar", "officeCode": "varchar", "reportsTo": "int"}}}

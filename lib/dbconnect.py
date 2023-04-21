@@ -58,12 +58,11 @@ def mysql_connection(user, password, dbname, host=None, port=None):
     return conn
 
 # Customer DB connector controller 
-def connect_cust_db(dbtype, db_config):
-    dbname, user, password, host = getConfig(db_config)
-    if dbtype == "MySQL":
-        return mysql_connection(user, password, dbname, host)
-    elif dbtype == "PostgresSQL":
-        return psqldb_connnection(user, password, dbname, host)
+def connect_cust_db(host, dbname, dbuser, dbpassword, dbtype):
+    if dbtype.casefold() == "mysql":
+        return mysql_connection(dbuser, dbpassword, dbname, host)
+    elif dbtype.casefold == "postgressql":
+        return psqldb_connnection(dbuser, dbpassword, dbname, host)
     return None
 
 # --------------------------------------------------------------------------- #
@@ -93,7 +92,6 @@ def get_dbconn_by_apikey(db_type, api_key):
     config = list(db_config_dict.values())[0]
 
     host, user, password = getConfig(config.values()) 
-    print(host, user, password, dbname)
 
     # Check DB type and make conn accordingly
     if db_type.casefold() == "mysql":
@@ -101,10 +99,8 @@ def get_dbconn_by_apikey(db_type, api_key):
     elif db_type.casefold() == "postgresql":
         # For localhost DB
         # db = psqldb_connnection(user, '', dbname)
-        print("Coming here in conn")
         db  = psqldb_connnection(user, password, dbname, host)
     # making DB connection: test postgres
-    print("Coming here in conn")
     return db
 
 
@@ -179,21 +175,43 @@ def save_schema_file(api_key, schema):
         json.dump(schema, file)
     return file_name
 
+def get_dbconfig_from_dict(dbconfig):
+    host = dbconfig.get('host')
+    dbname = dbconfig.get('dbname')
+    dbuser = dbconfig.get('dbuser')
+    dbpassword = dbconfig.get('dbpassword')
+    dbtype = dbconfig.get('db_type')
+    return host, dbname, dbuser, dbpassword, dbtype
+
+def get_dbconn_by_dbconfig(db_config, api_key):
+    db_ins = connect_db()
+    curr = db_ins.cursor()# check for right api key    
+    if api_key:
+        curr.execute('SELECT name FROM customers WHERE apikey = %s', [api_key])
+        name = curr.fetchall()
+        if name is None:
+            return {"error": "Wrong API key", "status": "400"}
+        host, dbname, dbuser, dbpassword, dbtype = get_dbconfig_from_dict(db_config)
+        # print(host, dbname, dbuser, dbpassword, dbtype)
+        user_db_ins = connect_cust_db(host, dbname, dbuser, dbpassword, dbtype)
+        return user_db_ins
+    return {"error": "API key not provided", "status": "400"} 
+
 # Get table schema
-def get_table_schema(db_type, api_key, tables):
-    conn = get_dbconn_by_apikey(db_type, api_key)
-    dbname = get_dbname_by_apikey(api_key)
+def get_table_schema(db_config, api_key, tables):
+    conn = get_dbconn_by_dbconfig(db_config, api_key)
+    # conn = get_dbconn_by_apikey(db_type, api_key)
+    # dbname = get_dbname_by_apikey(api_key)
+
+    host, dbname, dbuser, dbpassword, dbtype = get_dbconfig_from_dict(db_config)
     curr = conn.cursor()
     table_schemas = {}
-    print(tables)
     for table in tables:
-        print(f"for table{table} coming here")
         curr.execute(f"SELECT column_name, data_type FROM information_schema.columns WHERE table_name='{table}'")
         columns = curr.fetchall()
         schema = {column[0]: column[1] for column in columns}
         table_schemas[table] = schema
-    print("coming here")
-    return {"dbname":dbname, "dbtype": db_type, "schema": table_schemas}
+    return {"dbname":dbname, "dbtype": dbtype, "schema": table_schemas}
 
 # Create prompt
 def get_prompt(query, schema_file):
