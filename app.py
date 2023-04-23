@@ -46,16 +46,15 @@ def db_auth():
     response.status = "400"
     response.data = "No data provided"
 
-  dbpassword = request.json['dbpassword']
-  dbuser = request.json['dbuser']
-  dbname = request.json['dbname']
+  # dbpassword = request.json['dbpassword']
+  # dbuser = request.json['dbuser']
+  # dbname = request.json['dbname']
   name = request.json['name']
-  host = request.json['host']
-  db_type = request.json.get('db_type')
+  # host = request.json['host']
+  # db_type = request.json.get('db_type')
 
   try:
-    global db_ins
-    api_key = lib.dbconnect.getApiKey(name, dbuser, dbpassword, dbname, host)
+    api_key = lib.dbconnect.getApiKey(name)
     if api_key is not None:
       response = jsonify({"status": "200", "data": "Connection established", "API_Key": api_key})
     else:

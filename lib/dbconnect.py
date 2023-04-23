@@ -257,7 +257,7 @@ def get_columns(db, table):
     ins.execute(getColNamesStmt)
     print(ins.fetchall())
 
-def getApiKey(name, dbuser, dbpassword, dbname, host):
+def getApiKey(name):
     api_key = None
     # TODO: Shoudn't be connecting everytime making api call
     db_instance = connect_db()
@@ -266,10 +266,10 @@ def getApiKey(name, dbuser, dbpassword, dbname, host):
         # TODO: check if config is right before creating API key
         api_key = get_api_key()
         curr = db_instance.cursor()
-        dbconfig = get_dbconfig(dbname, dbuser, dbpassword, host)
+        # dbconfig = get_dbconfig(dbname, dbuser, dbpassword, host)
         now = datetime.datetime.now()
         curr.execute('INSERT INTO customers (id, name, apikey, totalapicall, created_at, dbconfig) values (%s, %s, %s, %s, %s, %s)', 
-                     (id, name, api_key, 0, now, dbconfig))
+                     (id, name, api_key, 0, now, {}))
         db_instance.commit()
     return api_key
 
