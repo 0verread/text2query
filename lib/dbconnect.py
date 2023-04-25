@@ -17,7 +17,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 storage_client = storage.Client()
-BUCKET = storage_client.bucket('orgateai')
+BUCKET = storage_client.bucket('orgateai.appspot.com')
 
 # get database details
 def makeit(table_schema, prompt):
@@ -168,7 +168,7 @@ def get_dbname_by_apikey(api_key):
 def create_file(json_schema, fileName):
  blob = BUCKET.blob(fileName)
  blob.upload_from_string(
-     data = json.dump(json_schema),
+     data = json.dumps(json_schema),
      content_type='application/json'
  )
  result = fileName + ' upload complete'
@@ -187,8 +187,6 @@ def save_schema_file(api_key, schema):
 
     # Save it as a JSON file to Google CDN
     file_name = get_file_name(api_key, dbname)
-    # with open(file_name, 'w') as file:
-    #     json.dump(schema, file)
     res = create_file(schema, file_name)
     print(res)
     return file_name
