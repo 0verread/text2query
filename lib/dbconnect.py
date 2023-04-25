@@ -9,10 +9,15 @@ import MySQLdb as mysqldb
 import psycopg2
 import bcrypt
 
+from google.cloud import storage
+
 
 from dotenv import load_dotenv
 
 load_dotenv()
+
+storage_client = storage.Client()
+BUCKET = storage_client.bucket('orgateai')
 
 # get database details
 def makeit(table_schema, prompt):
@@ -160,6 +165,16 @@ def get_dbname_by_apikey(api_key):
     return dbname
 
 
+def create_file(json_schema, fileName):
+ blob = BUCKET.blob(fileName)
+ blob.upload_from_string(
+     data = json.dump(json_schema),
+     content_type='application/json'
+ )
+ result = fileName + ' upload complete'
+ return {"response": result}
+
+
 def save_schema_file(api_key, schema):
     # file_name = None
 
@@ -169,10 +184,11 @@ def save_schema_file(api_key, schema):
 
     # Get DB Name
     dbname = schema.get('dbname')
-    # Save it as a JSON file
+
+    # Save it as a JSON file to Google CDN
     file_name = get_file_name(api_key, dbname)
-    with open(file_name, 'w') as file:
-        json.dump(schema, file)
+    # with open(file_name, 'w') as file:
+    #     json.dump(schema, file)
     return file_name
 
 def get_dbconfig_from_dict(dbconfig):
