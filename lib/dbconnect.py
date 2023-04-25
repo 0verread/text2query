@@ -189,6 +189,8 @@ def save_schema_file(api_key, schema):
     file_name = get_file_name(api_key, dbname)
     # with open(file_name, 'w') as file:
     #     json.dump(schema, file)
+    res = create_file(schema, file_name)
+    print(res)
     return file_name
 
 def get_dbconfig_from_dict(dbconfig):
