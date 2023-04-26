@@ -39,6 +39,20 @@ def makeit(table_schema, prompt):
   )
   return response.choices[0].text
 
+
+# Create prompt
+def get_prompt(schema):
+    table_strings = []
+    # file = open(schema_file, 'r')
+    # schema = json.loads(file.read())
+    table_schema = schema.get('schema')
+    for table_name, table_info in table_schema.items():
+        columns = [f"{col_name}" for col_name, col_type in table_info.items()]
+        table_string = f"{table_name}({', '.join(columns)})"
+        table_strings.append(table_string)
+    schema_part = r'\n# '.join(table_strings)
+    return schema_part
+
 # --------------------------------------------------------------------------------------- #
 """ 
 All this functions are designed to create a connection with Customer DB.
@@ -174,6 +188,10 @@ def create_file(json_schema, fileName):
  result = fileName + ' upload complete'
  return {"response": result}
 
+def read_schema_file(fileName):
+    blob = BUCKET.blob(fileName)
+    file_data = json.loads(blob.download_as_string())
+    return file_data
 
 def save_schema_file(api_key, schema):
     # file_name = None
@@ -229,27 +247,16 @@ def get_table_schema(db_config, api_key, tables):
         table_schemas[table] = schema
     return {"dbname":dbname, "dbtype": dbtype, "schema": table_schemas}
 
-# Create prompt
-def get_prompt(query, schema_file):
-    table_strings = []
-    file = open(schema_file, 'r')
-    schema = json.loads(file.read())
-    table_schema = schema.get('schema')
-    for table_name, table_info in table_schema.items():
-        columns = [f"{col_name}" for col_name, col_type in table_info.items()]
-        table_string = f"{table_name}({', '.join(columns)})"
-        table_strings.append(table_string)
-    schema_part = r'\n# '.join(table_strings)
-    return schema_part
 
-
-def exe_query(api_key, query):
-    dbname = get_dbname_by_apikey(api_key)
+def exe_query(api_key, db_config, query):
+    # dbname = get_dbname_by_apikey(api_key)
+    host, dbname, dbuser, dbpassword, dbtype = get_dbconfig_from_dict(db_config) 
     config_file_name = get_file_name(api_key, dbname)
-    file = open(config_file_name, 'r')
-    schema = json.loads(file.read())
-    db_type = schema.get('dbtype')
-    conn = get_dbconn_by_apikey(db_type, api_key)
+    json_schema = read_schema_file(config_file_name) 
+    # file = open(config_file_name, 'r')
+    # schema = json.loads(file.read())
+    # db_type = schema.get('dbtype')
+    conn = get_dbconn_by_apikey(dbtype, api_key)
     cur = conn.cursor()
 
 
@@ -257,11 +264,11 @@ def exe_query(api_key, query):
     # columns_schema = get_table_schema(cur, ['employees','departments','titles', 'dept_manager', 'salaries', 'works_in'])
 
     # Get the query ready using OpenAI api
-    text_q = query
-    final_prompt = "{}{}".format('A query to get ', text_q)
+    # text_q = query
+    final_prompt = "{}{}".format('A query to get ', query)
 
     file_name = get_file_name(api_key, dbname)
-    table_schemas_str = get_prompt(query, file_name) + ''
+    table_schemas_str = get_prompt(config_file_name) + ''
     sql_stmt = makeit(table_schemas_str, final_prompt)
     final_sql_q = sql_stmt.replace("\\n", " ").replace("\n", " ")
     cur.execute('select ' + final_sql_q)
