@@ -152,7 +152,6 @@ def get_dbconfig(dbname, dbuser, dbpassword, host):
     return json.dumps({dbname : config})
 
 # ---------------------------------------------------------------------------------- #
-
 # ------------------------------------------------------------------------------------ #
 
 # plannetscale DB : Our prod DB
@@ -253,22 +252,14 @@ def exe_query(api_key, db_config, query):
     host, dbname, dbuser, dbpassword, dbtype = get_dbconfig_from_dict(db_config) 
     config_file_name = get_file_name(api_key, dbname)
     json_schema = read_schema_file(config_file_name) 
-    # file = open(config_file_name, 'r')
-    # schema = json.loads(file.read())
-    # db_type = schema.get('dbtype')
-    conn = get_dbconn_by_apikey(dbtype, api_key)
+    conn = connect_cust_db(host, dbname, dbuser, dbpassword, dbtype)
     cur = conn.cursor()
-
-
-    # TODO: tables name should be dynamic
-    # columns_schema = get_table_schema(cur, ['employees','departments','titles', 'dept_manager', 'salaries', 'works_in'])
 
     # Get the query ready using OpenAI api
     # text_q = query
     final_prompt = "{}{}".format('A query to get ', query)
 
-    file_name = get_file_name(api_key, dbname)
-    table_schemas_str = get_prompt(config_file_name) + ''
+    table_schemas_str = get_prompt(json_schema) + ''
     sql_stmt = makeit(table_schemas_str, final_prompt)
     final_sql_q = sql_stmt.replace("\\n", " ").replace("\n", " ")
     cur.execute('select ' + final_sql_q)
