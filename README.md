@@ -6,6 +6,13 @@
 2. https://spacy.io/
 
 
+#### Local Dev
+
+```
+gunicorn -b :8080 app:app
+```
+
+
 #### Tech stack
 - PlannetScale for DB
 - Hosting: Vercel (Webapp) and Gcloud(api)
