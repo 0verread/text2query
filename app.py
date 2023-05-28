@@ -94,11 +94,13 @@ def query():
   response = None
   api_key = request.json.get('api_key')
   query = request.json.get('query')
-  db_config = request.json.get('db_config')
+  db_schema = request.json.get('db_schema')
+  # db_config = request.json.get('db_config')
 
   # TODO: check if API key is valid
   if api_key:
-    res = lib.dbconnect.exe_query(api_key, db_config, query)
+    # res = lib.dbconnect.exe_query(api_key, query)
+    res  = lib.dbconnect.get_sql_query(api_key, query, db_schema)
   else:  
     res = "API key is not provided"
   response = jsonify({"status": "200", "data": res})

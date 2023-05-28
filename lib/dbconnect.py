@@ -246,6 +246,43 @@ def get_table_schema(db_config, api_key, tables):
         table_schemas[table] = schema
     return {"dbname":dbname, "dbtype": dbtype, "schema": table_schemas}
 
+##################################################################################################
+
+"""
+This part is for friday-cli: get and execute SQL queries based on schema provided
+"""
+def check_api_key(api_key):
+    if api_key:
+        db_ins = connect_db()
+        curr = db_ins.cursor()
+        curr.execute('SELECT name FROM customers WHERE apikey = %s', [api_key])
+        name = curr.fetchall()
+        if name:
+           return True
+    return False
+        
+def get_sql_query_by_db_schema(query, db_schema):
+    final_sql_query = None
+    if query and db_schema:
+        prompt = "{}{}".format('A query to get', query)
+        sql_q = makeit(db_schema, prompt)
+        final_sql_query = sql_q.replace("\\n", " ").replace("\n", " ")
+    return final_sql_query
+
+def get_sql_query(api_key, query, db_schema, db_config=None):
+    final_sql_query = None
+    if api_key:
+        is_right_api_key = check_api_key(api_key)
+        if is_right_api_key is False:
+            return {"error": "Something wrong with API Key. Make sure it is correct.", "status": "400"}
+        final_sql_query = get_sql_query_by_db_schema(query, db_schema)
+        if final_sql_query is None:
+            return {"error": "Couldn't create SQL query. Make sure db_schema is correct.", "status": "400"}
+        return 'select' + final_sql_query
+    return {"error": "Empty API key.", "status": "400"} 
+
+
+####################################################################################################
 
 def exe_query(api_key, db_config, query):
     # dbname = get_dbname_by_apikey(api_key)
