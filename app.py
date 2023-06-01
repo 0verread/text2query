@@ -16,7 +16,6 @@ import lib.dbconnect
 
 
 app = Flask(__name__)
-# api = Api(app)
 
 openai.api_key = os.environ['OPENAI_API_KEY']
 
@@ -31,7 +30,6 @@ def run_csvsql_query(input_file, query):
     print(f'Error running query:{result.stderr}')
     return None
   else:
-    # print(result.stdout)
     return result.stdout
 
 

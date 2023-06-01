@@ -25,7 +25,6 @@ def makeit(table_schema, prompt):
   prompt1= r"### Postgres SQL tables, with their properties:\n#\n# " + test
   response = openai.Completion.create(
     model="text-davinci-003",
-    # prompt=prompt,
     # prompt="### Postgres SQL tables, with their properties:\n#\n# Employee(id, name, department_id)\n# Department(id, name, address)\n# Salary_Payments(id, employee_id, amount, date)\n#\n### A query to get employees who salary is greater than 25000 \nSELECT",
     # TODO: break this prompt string
     # prompt= "### Postgres SQL tables, with their properties:\n#\n# employees(emp_no, birth_date, first_name, last_name, hire_date)\n#\n### {} \nSELECT".format(prompt),
@@ -43,8 +42,6 @@ def makeit(table_schema, prompt):
 # Create prompt
 def get_prompt(schema):
     table_strings = []
-    # file = open(schema_file, 'r')
-    # schema = json.loads(file.read())
     table_schema = schema.get('schema')
     for table_name, table_info in table_schema.items():
         columns = [f"{col_name}" for col_name, col_type in table_info.items()]
@@ -67,7 +64,6 @@ def psqldb_connnection(user, password, dbname, host=None, port=None):
                           password=password,
                           port=port)
 
-  print(conn)
   return conn
 
 
@@ -88,7 +84,6 @@ def connect_cust_db(host, dbname, dbuser, dbpassword, dbtype):
 
 def getConfig(db_config):
     config = list(db_config)
-    print(config)
     return config[0], config[1], config[2]
 
 def db_config_by_apikey(api_key):
@@ -106,7 +101,6 @@ def get_dbconn_by_apikey(db_type, api_key):
     db_config_dict = json.loads(db_config_str)
 
     # Get DB config
-    # db_con = db_config[0][1:4]
     dbname = list(db_config_dict.keys())[0]
     config = list(db_config_dict.values())[0]
 
@@ -117,7 +111,6 @@ def get_dbconn_by_apikey(db_type, api_key):
         db = mysql_connection(user, password, dbname, host)
     elif db_type.casefold() == "postgresql":
         # For localhost DB
-        # db = psqldb_connnection(user, '', dbname)
         db  = psqldb_connnection(user, password, dbname, host)
     # making DB connection: test postgres
     return db
@@ -205,7 +198,6 @@ def save_schema_file(api_key, schema):
     # Save it as a JSON file to Google CDN
     file_name = get_file_name(api_key, dbname)
     res = create_file(schema, file_name)
-    print(res)
     return file_name
 
 def get_dbconfig_from_dict(dbconfig):
@@ -225,7 +217,6 @@ def get_dbconn_by_dbconfig(db_config, api_key):
         if name is None:
             return {"error": "Wrong API key", "status": "400"}
         host, dbname, dbuser, dbpassword, dbtype = get_dbconfig_from_dict(db_config)
-        # print(host, dbname, dbuser, dbpassword, dbtype)
         user_db_ins = connect_cust_db(host, dbname, dbuser, dbpassword, dbtype)
         return user_db_ins
     return {"error": "API key not provided", "status": "400"} 
@@ -285,7 +276,6 @@ def get_sql_query(api_key, query, db_schema, db_config=None):
 ####################################################################################################
 
 def exe_query(api_key, db_config, query):
-    # dbname = get_dbname_by_apikey(api_key)
     host, dbname, dbuser, dbpassword, dbtype = get_dbconfig_from_dict(db_config) 
     config_file_name = get_file_name(api_key, dbname)
     json_schema = read_schema_file(config_file_name) 
@@ -293,7 +283,6 @@ def exe_query(api_key, db_config, query):
     cur = conn.cursor()
 
     # Get the query ready using OpenAI api
-    # text_q = query
     final_prompt = "{}{}".format('A query to get ', query)
 
     table_schemas_str = get_prompt(json_schema) + ''
