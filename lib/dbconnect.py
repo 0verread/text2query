@@ -177,8 +177,8 @@ def create_file(json_schema, fileName):
      data = json.dumps(json_schema),
      content_type='application/json'
  )
- result = fileName + ' upload complete'
- return {"response": result}
+ res = fileName + ' upload complete'
+ return {"response": res}
 
 def read_schema_file(fileName):
     blob = BUCKET.blob(fileName)
