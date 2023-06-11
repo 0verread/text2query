@@ -1,5 +1,5 @@
 # text2query
-#### API to get data insights using everyday language.
+#### flask API to get data insights using everyday language.
 
 ### References
 
