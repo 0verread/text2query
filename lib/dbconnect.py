@@ -14,6 +14,8 @@ from google.cloud import storage
 
 from dotenv import load_dotenv
 
+from generate_key import 
+
 load_dotenv()
 
 storage_client = storage.Client()
@@ -112,35 +114,6 @@ def get_dbconn_by_apikey(db_type, api_key):
 
 
 # -------------------------------------------------------------------------------
-
-
-"""
-This are lib functions. pretty generic
-TODO: move to a separate file
-"""
-
-def getId(prefix):
-    size = 6
-    chars= string.ascii_uppercase + string.digits
-    id  = prefix + ''.join(random.choices(chars, k=size))
-    return id
-
-def getHashedPass(password):
-    return bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt(10))
-
-def get_file_name(api_key, dbname):
-    return f'{api_key}_{dbname}.json'
-
-def get_api_key():
-    return 'orai-' + str(uuid.uuid4())
-
-def get_dbconfig(dbname, dbuser, dbpassword, host):
-    hashed_pass = getHashedPass(dbpassword)
-    config = {"dbuser": dbuser, "dbpassword": hashed_pass.decode('utf-8'), "host": host}
-    return json.dumps({dbname : config})
-
-# ---------------------------------------------------------------------------------- #
-# ------------------------------------------------------------------------------------ #
 
 # plannetscale DB : Our prod DB
 def connect_db():
