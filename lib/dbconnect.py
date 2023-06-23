@@ -19,16 +19,12 @@ load_dotenv()
 storage_client = storage.Client()
 BUCKET = storage_client.bucket('orgateai.appspot.com')
 
-# get database details
+# Make API call to OPENAI
 def makeit(table_schema, prompt):
-  test = table_schema + r"\n#\n### " +  prompt + r" \nSELECT"
-  prompt1= r"### Postgres SQL tables, with their properties:\n#\n# " + test
+  final_prompt= r"### Postgres SQL tables, with their properties:\n#\n# " + table_schema + r"\n#\n### " +  prompt + r" \nSELECT"
   response = openai.Completion.create(
     model="text-davinci-003",
-    # prompt="### Postgres SQL tables, with their properties:\n#\n# Employee(id, name, department_id)\n# Department(id, name, address)\n# Salary_Payments(id, employee_id, amount, date)\n#\n### A query to get employees who salary is greater than 25000 \nSELECT",
-    # TODO: break this prompt string
-    # prompt= "### Postgres SQL tables, with their properties:\n#\n# employees(emp_no, birth_date, first_name, last_name, hire_date)\n#\n### {} \nSELECT".format(prompt),
-    prompt = prompt1,
+    prompt = final_prompt,
     temperature=0.5,
     max_tokens=100,
     top_p=1.0,
@@ -49,7 +45,6 @@ def get_prompt(schema):
         table_strings.append(table_string)
     schema_part = r'\n# '.join(table_strings)
     return schema_part
-
 # --------------------------------------------------------------------------------------- #
 """ 
 All this functions are designed to create a connection with Customer DB.
