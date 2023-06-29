@@ -14,8 +14,6 @@ from google.cloud import storage
 
 from dotenv import load_dotenv
 
-from generate_key import 
-
 load_dotenv()
 
 storage_client = storage.Client()

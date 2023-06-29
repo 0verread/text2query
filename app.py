@@ -6,25 +6,17 @@ import os
 import subprocess
 
 from flask import Flask, request, jsonify
-
-from langchain.llms import OpenAI
-
 # For future use
 # from flask_restful import Resource, Api
 
 # internal libs
 import lib.dbconnect 
 
-
-
 app = Flask(__name__)
-
-llm = OpenAI(openai_api_key=os.environ['OPENAI_API_KEY'])
 
 # openai.api_key = os.environ['OPENAI_API_KEY']
 
 db_ins  = None
-
 
 def run_csvsql_query(input_file, query):
   final_sql_query = '{}{}'.format('SELECT', query)
