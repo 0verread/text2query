@@ -8,13 +8,13 @@
 2. https://spacy.io/
 
 
-#### Local Dev
+#### Local Development 
 
 ```
 gunicorn -b :8080 app:app
 ```
 
-#### TODO
+#### migration and Todo 
 
 1. Redesign to [fastAPI](https://fastapi.tiangolo.com/lo/) and [Langchain](https://langchain.com/)
 
