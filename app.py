@@ -1,32 +1,24 @@
 #!./venv/bin/python3
-import json
-import openai
-import os
-
 import subprocess
 
 from flask import Flask, request, jsonify
 # For future use
 # from flask_restful import Resource, Api
 
-# internal libs
-import lib.dbconnect 
-
 app = Flask(__name__)
 
-# openai.api_key = os.environ['OPENAI_API_KEY']
 
 db_ins  = None
 
 def run_csvsql_query(input_file, query):
-  final_sql_query = '{}{}'.format('SELECT', query)
-  args = ["--query", f"{final_sql_query}", input_file]
-  result = subprocess.run(["csvsql"] + args, capture_output=True, text=True)
-  if result.returncode != 0:
-    print(f'Error running query:{result.stderr}')
-    return None
-  else:
-    return result.stdout
+    final_sql_query = '{}{}'.format('SELECT', query)
+    args = ["--query", f"{final_sql_query}", input_file]
+    result = subprocess.run(["csvsql"] + args, capture_output=True, text=True)
+    if result.returncode != 0:
+      print(f'Error running query:{result.stderr}')
+      return None
+    else:
+      return result.stdout
 
 
 @app.route('/')
@@ -107,4 +99,3 @@ def not_found(error):
 
 if __name__ == "__main__":
   app.run(host='0.0.0.0', port=3000, debug=False)
-  
