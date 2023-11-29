@@ -7,7 +7,6 @@ from flask import Flask, request, jsonify
 
 app = Flask(__name__)
 
-
 db_ins  = None
 
 def run_csvsql_query(input_file, query):
@@ -92,6 +91,12 @@ def query():
   response = jsonify({"status": "200", "data": res})
   return response
 
+@app.route('/config', methods=['GET', 'POST'])
+def dbConfig():
+  response = None
+  api_key = request.json.get('api_key')
+  
+
   
 @app.errorhandler(404)
 def not_found(error):
@@ -99,3 +104,5 @@ def not_found(error):
 
 if __name__ == "__main__":
   app.run(host='0.0.0.0', port=3000, debug=False)
+
+
