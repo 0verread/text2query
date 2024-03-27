@@ -1,4 +1,5 @@
 #!./venv/bin/python3
+
 import subprocess
 
 from flask import Flask, request, jsonify
@@ -27,17 +28,11 @@ def home():
 @app.route('/auth', methods=['POST'])
 def db_auth():
   response = None
-  if not request.json : 
+  if not request.json :
     response.status = "400"
     response.data = "No data provided"
 
-  # dbpassword = request.json['dbpassword']
-  # dbuser = request.json['dbuser']
-  # dbname = request.json['dbname']
   name = request.json['name']
-  # host = request.json['host']
-  # db_type = request.json.get('db_type')
-
   try:
     api_key = lib.dbconnect.getApiKey(name)
     if api_key is not None:
@@ -45,7 +40,6 @@ def db_auth():
     else:
       response = jsonify({"status": "400", "data": "Could not create API key. ", "API_Key": api_key})
   except Exception as e:
-    print(e)
     response = jsonify({"status": "400", "data": "Connection could not be established"})
   return response
 
@@ -56,14 +50,14 @@ def config():
   if not request.json :
     response.status = "400"
     response.data = "No data provided"
-  
+
   allowed_tables = request.json['tables']
   api_key = request.json.get('api_key')
   db_config = request.json['db_config']
 
   table_schema = lib.dbconnect.get_table_schema(db_config, api_key, allowed_tables)
   file_name = lib.dbconnect.save_schema_file(api_key, table_schema)
-  
+
   if file_name:
     response = jsonify({"status": "200", "data": "Success"})
   else:
@@ -73,6 +67,7 @@ def config():
 
 """ Right now, you have to pass SQL query to test this API
     TODO: It takes query in natural lang, retrun result"""
+
 @app.route('/query', methods=['POST'])
 def query():
   global db_ins
@@ -86,7 +81,7 @@ def query():
   if api_key:
     # res = lib.dbconnect.exe_query(api_key, query)
     res  = lib.dbconnect.get_sql_query(api_key, query, db_schema)
-  else:  
+  else:
     res = "API key is not provided"
   response = jsonify({"status": "200", "data": res})
   return response
@@ -95,12 +90,12 @@ def query():
 def dbConfig():
   response = None
   api_key = request.json.get('api_key')
-  
 
-  
+
+
 @app.errorhandler(404)
 def not_found(error):
-  return jsonify({'error': 'Not found'})
+  return jsonify({'error': 'Route Not found'})
 
 if __name__ == "__main__":
   app.run(host='0.0.0.0', port=3000, debug=False)

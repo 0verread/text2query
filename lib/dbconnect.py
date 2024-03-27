@@ -46,7 +46,7 @@ def get_prompt(schema):
     schema_part = r'\n# '.join(table_strings)
     return schema_part
 # --------------------------------------------------------------------------------------- #
-""" 
+"""
 All this functions are designed to create a connection with Customer DB.
 Right now, we have support for PostgresQL and MySQL database.
 """
@@ -67,7 +67,7 @@ def mysql_connection(user, password, dbname, host=None, port=None):
     conn = mysqldb.connect(user=user, password=password, database=dbname, host=host)
     return conn
 
-# Customer DB connector controller 
+# Customer DB connector controller
 def connect_cust_db(host, dbname, dbuser, dbpassword, dbtype):
     if dbtype.casefold() == "mysql":
         return mysql_connection(dbuser, dbpassword, dbname, host)
@@ -99,7 +99,7 @@ def get_dbconn_by_apikey(db_type, api_key):
     dbname = list(db_config_dict.keys())[0]
     config = list(db_config_dict.values())[0]
 
-    host, user, password = getConfig(config.values()) 
+    host, user, password = getConfig(config.values())
 
     # Check DB type and make conn accordingly
     if db_type.casefold() == "mysql":
@@ -176,7 +176,7 @@ def get_dbconfig_from_dict(dbconfig):
 
 def get_dbconn_by_dbconfig(db_config, api_key):
     db_ins = connect_db()
-    curr = db_ins.cursor()# check for right api key    
+    curr = db_ins.cursor()# check for right api key
     if api_key:
         curr.execute('SELECT name FROM customers WHERE apikey = %s', [api_key])
         name = curr.fetchall()
@@ -185,7 +185,7 @@ def get_dbconn_by_dbconfig(db_config, api_key):
         host, dbname, dbuser, dbpassword, dbtype = get_dbconfig_from_dict(db_config)
         user_db_ins = connect_cust_db(host, dbname, dbuser, dbpassword, dbtype)
         return user_db_ins
-    return {"error": "API key not provided", "status": "400"} 
+    return {"error": "API key not provided", "status": "400"}
 
 # Get table schema
 def get_table_schema(db_config, api_key, tables):
@@ -217,7 +217,7 @@ def check_api_key(api_key):
         if name:
            return True
     return False
-        
+
 def get_sql_query_by_db_schema(query, db_schema):
     final_sql_query = None
     if query and db_schema:
@@ -236,15 +236,15 @@ def get_sql_query(api_key, query, db_schema, db_config=None):
         if final_sql_query is None:
             return {"error": "Couldn't create SQL query. Make sure db_schema is correct.", "status": "400"}
         return 'select' + final_sql_query
-    return {"error": "Empty API key.", "status": "400"} 
+    return {"error": "Empty API key.", "status": "400"}
 
 
 ####################################################################################################
 
 def exe_query(api_key, db_config, query):
-    host, dbname, dbuser, dbpassword, dbtype = get_dbconfig_from_dict(db_config) 
+    host, dbname, dbuser, dbpassword, dbtype = get_dbconfig_from_dict(db_config)
     config_file_name = get_file_name(api_key, dbname)
-    json_schema = read_schema_file(config_file_name) 
+    json_schema = read_schema_file(config_file_name)
     conn = connect_cust_db(host, dbname, dbuser, dbpassword, dbtype)
     cur = conn.cursor()
 
@@ -274,7 +274,7 @@ def getApiKey(name):
         curr = db_instance.cursor()
         # dbconfig = get_dbconfig(dbname, dbuser, dbpassword, host)
         now = datetime.datetime.now()
-        curr.execute('INSERT INTO customers (id, name, apikey, totalapicall, created_at, dbconfig) values (%s, %s, %s, %s, %s, %s)', 
+        curr.execute('INSERT INTO customers (id, name, apikey, totalapicall, created_at, dbconfig) values (%s, %s, %s, %s, %s, %s)',
                      (id, name, api_key, 0, now, {}))
         db_instance.commit()
     return api_key
